@@ -49,10 +49,19 @@ const statusText = document.getElementById("statusText");
 const resetBtn = document.getElementById("resetBtn");
 const newBtn = document.getElementById("newBtn");
 const gameModeSelect = document.getElementById("gameModeSelect");
+const playerXNameInput = document.getElementById("playerXName");
+const playerONameInput = document.getElementById("playerOName");
+const playerXScoreEl = document.getElementById("playerXScore");
+const playerOScoreEl = document.getElementById("playerOScore");
 
 let board = Array(9).fill(null);      // 'X' | 'O' | null
 let turn = "X";
 let gameOver = false;
+
+// Player names and scores
+let playerXName = "Player X";
+let playerOName = "Player O";
+let scores = { X: 0, O: 0 };
 
 // Phase control
 let phase = "placement";              // "placement" | "movement"
@@ -73,15 +82,58 @@ function init() {
   renderPoints();
   renderMarks();
   updateUI();
+  updateScoreDisplay();
 
   resetBtn.addEventListener("click", resetBoard);
   newBtn.addEventListener("click", newGame);
   gameModeSelect.addEventListener("change", onGameModeChange);
+  playerXNameInput.addEventListener("input", updatePlayerNames);
+  playerONameInput.addEventListener("input", updatePlayerNames);
+
+  // Load saved names from localStorage if available
+  const savedXName = localStorage.getItem("playerXName");
+  const savedOName = localStorage.getItem("playerOName");
+  if (savedXName) {
+    playerXName = savedXName;
+    playerXNameInput.value = savedXName;
+  }
+  if (savedOName) {
+    playerOName = savedOName;
+    playerONameInput.value = savedOName;
+  }
+  updateScoreDisplay();
 }
 
 function onGameModeChange() {
   gameMode = gameModeSelect.value;
+
+  // Update Player O name placeholder based on mode
+  if (gameMode !== "pvp") {
+    const difficulty = gameMode.split("-")[1];
+    playerONameInput.placeholder = `Computer (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`;
+    if (!playerONameInput.value) {
+      playerOName = playerONameInput.placeholder;
+    }
+  } else {
+    playerONameInput.placeholder = "Player O";
+    if (!playerONameInput.value) {
+      playerOName = "Player O";
+    }
+  }
+
+  updateScoreDisplay();
   resetBoard();
+}
+
+function updatePlayerNames() {
+  playerXName = playerXNameInput.value.trim() || "Player X";
+  playerOName = playerONameInput.value.trim() || "Player O";
+
+  // Save to localStorage
+  localStorage.setItem("playerXName", playerXName);
+  localStorage.setItem("playerOName", playerOName);
+
+  updateScoreDisplay();
 }
 
 function renderPoints() {
@@ -173,7 +225,8 @@ function handlePlacement(id) {
   // Check win during placement (optional, but usually allowed)
   const winner = checkWinner();
   if (winner) {
-    endGame(`${winner} Wins`);
+    const winnerName = winner === "X" ? playerXName : playerOName;
+    endGame(`${winnerName} Wins!`, winner);
     return;
   }
 
@@ -248,7 +301,8 @@ function handleMovement(clickedId) {
   // Check win
   const winner = checkWinner();
   if (winner) {
-    endGame(`${winner} Wins`);
+    const winnerName = winner === "X" ? playerXName : playerOName;
+    endGame(`${winnerName} Wins!`, winner);
     return;
   }
 
@@ -279,12 +333,24 @@ function checkWinner() {
   return null;
 }
 
-function endGame(message) {
+function endGame(message, winnerSymbol = null) {
   gameOver = true;
   statusText.textContent = message;
   selectedFrom = null;
+
+  // Update score if there's a winner
+  if (winnerSymbol && (winnerSymbol === "X" || winnerSymbol === "O")) {
+    scores[winnerSymbol]++;
+    updateScoreDisplay();
+  }
+
   renderMarks();
   updateUI();
+}
+
+function updateScoreDisplay() {
+  playerXScoreEl.textContent = `${playerXName}: ${scores.X}`;
+  playerOScoreEl.textContent = `${playerOName}: ${scores.O}`;
 }
 
 function updateUI() {

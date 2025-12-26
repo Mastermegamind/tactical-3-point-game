@@ -41,6 +41,16 @@
           <p class="text-muted mb-3">2 players • line up 3 points to win</p>
 
           <div class="mb-3">
+            <label class="form-label text-muted">Player X Name</label>
+            <input type="text" id="playerXName" class="form-control" placeholder="Player X" maxlength="20">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-muted">Player O Name</label>
+            <input type="text" id="playerOName" class="form-control" placeholder="Player O / Computer" maxlength="20">
+          </div>
+
+          <div class="mb-3">
             <label class="form-label text-muted">Game Mode</label>
             <select id="gameModeSelect" class="form-select">
               <option value="pvp">Player vs Player</option>
@@ -48,6 +58,16 @@
               <option value="pvc-medium">vs Computer (Medium)</option>
               <option value="pvc-hard">vs Computer (Hard)</option>
             </select>
+          </div>
+
+          <div class="p-3 rounded-4 bg-body-tertiary mb-3">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Score</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span id="playerXScore" class="fw-bold">Player X: 0</span>
+              <span id="playerOScore" class="fw-bold">Player O: 0</span>
+            </div>
           </div>
 
           <div class="p-3 rounded-4 bg-body-tertiary mb-3">
