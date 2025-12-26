@@ -92,32 +92,48 @@ function init() {
 
   // Load saved names from localStorage if available
   const savedXName = localStorage.getItem("playerXName");
-  const savedOName = localStorage.getItem("playerOName");
   if (savedXName) {
     playerXName = savedXName;
     playerXNameInput.value = savedXName;
   }
-  if (savedOName) {
-    playerOName = savedOName;
-    playerONameInput.value = savedOName;
+
+  // Set Player O name based on initial game mode
+  if (gameMode !== "pvp") {
+    playerOName = "AI";
+    playerONameInput.value = "AI";
+    playerONameInput.disabled = true;
+  } else {
+    const savedOName = localStorage.getItem("playerOName");
+    if (savedOName && savedOName !== "AI") {
+      playerOName = savedOName;
+      playerONameInput.value = savedOName;
+    }
   }
+
   updateScoreDisplay();
 }
 
 function onGameModeChange() {
   gameMode = gameModeSelect.value;
 
-  // Update Player O name placeholder based on mode
+  // Update Player O name based on mode
   if (gameMode !== "pvp") {
-    const difficulty = gameMode.split("-")[1];
-    playerONameInput.placeholder = `Computer (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`;
-    if (!playerONameInput.value) {
-      playerOName = playerONameInput.placeholder;
-    }
+    // Computer mode - set to "AI" and disable input
+    playerOName = "AI";
+    playerONameInput.value = "AI";
+    playerONameInput.disabled = true;
+    playerONameInput.placeholder = "AI";
   } else {
+    // PvP mode - enable input and restore saved name
+    playerONameInput.disabled = false;
     playerONameInput.placeholder = "Player O";
-    if (!playerONameInput.value) {
+    const savedOName = localStorage.getItem("playerOName");
+    if (savedOName && savedOName !== "AI") {
+      playerOName = savedOName;
+      playerONameInput.value = savedOName;
+    } else {
       playerOName = "Player O";
+      playerONameInput.value = "";
     }
   }
 
