@@ -378,10 +378,11 @@ const GAME_MODE = '<?= $mode ?>';
 const IS_ONLINE = <?= $isOnlineGame ? 'true' : 'false' ?>;
 const PLAYER_SIDE = '<?= $playerSide ?>';
 const COMPUTER_PLAYER = 'O';
+const USER_ID = <?= $_SESSION['user_id'] ?>;
 
 // Include the original game.js logic here (will be loaded separately)
 </script>
-<script src="game-engine.js"></script>
+<script src="game-engine.js?v=<?= time() ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>

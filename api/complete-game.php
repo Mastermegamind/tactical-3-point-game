@@ -48,31 +48,46 @@ try {
     $stmt->execute([$winnerId, $sessionId]);
 
     // Update player stats
+    $isPvC = strpos($session['game_mode'], 'pvc') !== false;
+
     if ($winnerId) {
         // Update winner
         $stmt = $conn->prepare("UPDATE users SET wins = wins + 1, rating = rating + 25 WHERE id = ?");
         $stmt->execute([$winnerId]);
 
         // Update loser
-        $loserId = ($winnerId == $session['player1_id']) ? $session['player2_id'] : $session['player1_id'];
-        if ($loserId) {
-            $stmt = $conn->prepare("UPDATE users SET losses = losses + 1, rating = rating - 10 WHERE id = ?");
-            $stmt->execute([$loserId]);
+        if (!$isPvC) {
+            // In PvP mode, update the other player as loser
+            $loserId = ($winnerId == $session['player1_id']) ? $session['player2_id'] : $session['player1_id'];
+            if ($loserId) {
+                $stmt = $conn->prepare("UPDATE users SET losses = losses + 1, rating = rating - 10 WHERE id = ?");
+                $stmt->execute([$loserId]);
+            }
         }
+        // In PvC mode, if player wins, AI loses (no stats update needed)
     } else {
-        // Draw - update both players
-        $stmt = $conn->prepare("UPDATE users SET draws = draws + 1 WHERE id IN (?, ?)");
-        $stmt->execute([$session['player1_id'], $session['player2_id']]);
+        // Winner is NULL - means either draw or AI won
+        if ($isPvC) {
+            // In PvC mode, null winner means AI won, so player lost
+            $stmt = $conn->prepare("UPDATE users SET losses = losses + 1, rating = rating - 10 WHERE id = ?");
+            $stmt->execute([$session['player1_id']]);
+        } else {
+            // In PvP mode, null winner means draw
+            $stmt = $conn->prepare("UPDATE users SET draws = draws + 1 WHERE id IN (?, ?)");
+            $stmt->execute([$session['player1_id'], $session['player2_id']]);
+        }
     }
 
     // Save AI training data if vs computer
-    if (strpos($session['game_mode'], 'pvc') !== false) {
+    if ($isPvC) {
         $gameDuration = strtotime('now') - strtotime($session['started_at']);
         $difficulty = explode('-', $session['game_mode'])[1];
 
-        $outcome = 'draw';
+        // Determine outcome: if winnerId is set, player won; if null, AI won
         if ($winnerId) {
-            $outcome = ($winnerId == $session['player1_id']) ? 'player_win' : 'ai_win';
+            $outcome = 'player_win';
+        } else {
+            $outcome = 'ai_win';
         }
 
         // Count total moves

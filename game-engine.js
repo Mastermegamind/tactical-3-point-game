@@ -193,11 +193,12 @@ async function handlePlacement(id) {
   const boardBefore = [...board];
   moveStartTime = Date.now();
 
-  board[id] = turn;
-  placedCount[turn]++;
+  const currentPlayer = turn;
+  board[id] = currentPlayer;
+  placedCount[currentPlayer]++;
 
   // Save move to database
-  await recordMove('placement', null, id, boardBefore);
+  await recordMove('placement', null, id, boardBefore, 0, currentPlayer);
 
   const winner = checkWinner();
   if (winner) {
@@ -209,7 +210,15 @@ async function handlePlacement(id) {
     phase = "movement";
     selectedFrom = null;
     currentMovingPlayer = "X";
+    turn = "X"; // CRITICAL: Set turn to X (player) at start of movement phase
     statusText.textContent = "Movement Phase - Click a pebble to move";
+
+    renderMarks();
+    updateUI();
+    await saveGameState();
+
+    // Don't call makeComputerMove here - it's player's turn to move first
+    return;
   } else {
     turn = turn === "X" ? "O" : "X";
   }
@@ -222,7 +231,16 @@ async function handlePlacement(id) {
 }
 
 async function handleMovement(clickedId) {
-  const allowedPlayer = IS_ONLINE ? PLAYER_SIDE : (GAME_MODE === "pvp" ? currentMovingPlayer : "X");
+  // Determine which player is allowed to move
+  let allowedPlayer;
+  if (IS_ONLINE) {
+    allowedPlayer = PLAYER_SIDE;
+  } else if (GAME_MODE === "pvp") {
+    allowedPlayer = currentMovingPlayer;
+  } else {
+    // In AI mode, use the current turn (X for player, O for AI)
+    allowedPlayer = turn;
+  }
 
   if (selectedFrom === null) {
     const clickedPiece = board[clickedId];
@@ -256,15 +274,25 @@ async function handleMovement(clickedId) {
     return;
   }
 
+  // CRITICAL: Validate that the piece being moved belongs to the allowed player
+  // This prevents the AI from moving player pieces
+  if (board[from] !== allowedPlayer) {
+    console.error('Invalid move attempt: piece does not belong to current player');
+    selectedFrom = null;
+    renderMarks();
+    return;
+  }
+
   const boardBefore = [...board];
+  const currentPlayer = board[from]; // Store who is moving BEFORE we move the piece
 
   board[to] = board[from];
   board[from] = null;
   selectedFrom = null;
 
-  // Save move
+  // Save move with the player who actually made the move
   const thinkTime = Date.now() - moveStartTime;
-  await recordMove('movement', from, to, boardBefore, thinkTime);
+  await recordMove('movement', from, to, boardBefore, thinkTime, currentPlayer);
 
   const winner = checkWinner();
   if (winner) {
@@ -272,22 +300,30 @@ async function handleMovement(clickedId) {
     return;
   }
 
+  // Switch turns - CRITICAL: Update turn for both PvP and AI modes
   if (GAME_MODE === "pvp" || IS_ONLINE) {
     currentMovingPlayer = currentMovingPlayer === "X" ? "O" : "X";
     turn = currentMovingPlayer;
+  } else {
+    // In AI mode, switch between X and O
+    turn = turn === "X" ? "O" : "X";
   }
 
   renderMarks();
   updateUI();
   await saveGameState();
 
-  if (GAME_MODE !== "pvp" && !IS_ONLINE) {
+  // Only trigger AI if it's computer's turn
+  if (GAME_MODE !== "pvp" && !IS_ONLINE && turn === COMPUTER_PLAYER) {
     makeComputerMove();
   }
 }
 
-async function recordMove(moveType, fromPosition, toPosition, boardBefore, thinkTime = 0) {
+async function recordMove(moveType, fromPosition, toPosition, boardBefore, thinkTime = 0, player = null) {
   moveNumber++;
+
+  // If player not provided, use current turn (but this should always be provided now)
+  const movingPlayer = player || turn;
 
   try {
     await fetch('api/save-move.php', {
@@ -296,7 +332,7 @@ async function recordMove(moveType, fromPosition, toPosition, boardBefore, think
       body: JSON.stringify({
         session_id: SESSION_ID,
         move_number: moveNumber,
-        player: turn,
+        player: movingPlayer,
         move_type: moveType,
         from_position: fromPosition,
         to_position: toPosition,
@@ -333,9 +369,19 @@ async function endGame(winnerSymbol) {
 
   // Save completion to database
   try {
-    const winnerId = IS_ONLINE ?
-      (winnerSymbol === PLAYER_SIDE ? '<?= $_SESSION["user_id"] ?>' : null) :
-      (winnerSymbol === "X" ? '<?= $_SESSION["user_id"] ?>' : null);
+    // Calculate winnerId properly
+    let winnerId = null;
+
+    if (IS_ONLINE) {
+      // In online mode, winner is current user if they won, otherwise it's the opponent
+      winnerId = (winnerSymbol === PLAYER_SIDE) ? USER_ID : null;
+    } else if (GAME_MODE.startsWith('pvc')) {
+      // In AI mode, winner is current user if X won, null if AI (O) won
+      winnerId = (winnerSymbol === "X") ? USER_ID : null;
+    } else {
+      // In PvP mode, player1 is always X
+      winnerId = (winnerSymbol === "X") ? USER_ID : null;
+    }
 
     await fetch('api/complete-game.php', {
       method: 'POST',
@@ -359,7 +405,8 @@ function updateUI() {
   if (phase === "placement") {
     turnText.textContent = turn === "X" ? "Blue" : "Pink";
   } else {
-    const currentPlayer = GAME_MODE === "pvp" || IS_ONLINE ? currentMovingPlayer : "X";
+    // In movement phase, show current turn
+    const currentPlayer = GAME_MODE === "pvp" || IS_ONLINE ? currentMovingPlayer : turn;
     turnText.textContent = currentPlayer === "X" ? "Blue" : "Pink";
   }
 
@@ -369,8 +416,13 @@ function updateUI() {
         `Place your pebbles (${placedCount.X}/3 Blue, ${placedCount.O}/3 Pink)`;
     } else {
       if (selectedFrom === null) {
-        statusText.textContent = IS_ONLINE && turn !== PLAYER_SIDE ?
-          "Opponent's turn" : `Click a pebble to move it`;
+        if (IS_ONLINE && turn !== PLAYER_SIDE) {
+          statusText.textContent = "Opponent's turn";
+        } else if (GAME_MODE !== "pvp" && !IS_ONLINE && turn === COMPUTER_PLAYER) {
+          statusText.textContent = "AI is thinking...";
+        } else {
+          statusText.textContent = "Click a pebble to move it";
+        }
       }
     }
   }
@@ -382,8 +434,16 @@ function isComputerTurn() {
 }
 
 function makeComputerMove() {
+  // Don't make moves in PvP or online mode
   if (GAME_MODE === "pvp" || IS_ONLINE) return;
+
+  // In placement phase, only move if it's computer's turn
   if (phase === "placement" && !isComputerTurn()) return;
+
+  // In movement phase, only move if it's computer's turn
+  if (phase === "movement" && turn !== COMPUTER_PLAYER) return;
+
+  // Prevent multiple simultaneous moves
   if (computerMoving) return;
 
   computerMoving = true;
@@ -430,16 +490,18 @@ function computerPlacement() {
 function computerMovement() {
   const difficulty = GAME_MODE.split("-")[1];
   let fromTo = null;
-  const opponent = turn === "X" ? "O" : "X";
 
   if (difficulty === "hard") {
+    // Try to win with AI's own pieces
     fromTo = findWinningMovementMove(COMPUTER_PLAYER);
-    if (!fromTo) fromTo = findWinningMovementMove(opponent);
+    // If can't win, try to block opponent by finding a blocking move
+    if (!fromTo) fromTo = findBlockingMovementMove(COMPUTER_PLAYER);
+    // Otherwise, make the best strategic move
     if (!fromTo) fromTo = findBestMovementMove();
   } else if (difficulty === "medium") {
     if (Math.random() < 0.6) {
       fromTo = findWinningMovementMove(COMPUTER_PLAYER);
-      if (!fromTo) fromTo = findWinningMovementMove(opponent);
+      if (!fromTo) fromTo = findBlockingMovementMove(COMPUTER_PLAYER);
     }
     if (!fromTo) fromTo = getRandomMovementMove();
   } else {
@@ -447,8 +509,11 @@ function computerMovement() {
   }
 
   if (fromTo) {
+    console.log('AI moving from', fromTo.from, 'to', fromTo.to);
     selectedFrom = fromTo.from;
     handleMovement(fromTo.to);
+  } else {
+    console.error('AI could not find a valid move!');
   }
 }
 
@@ -500,6 +565,37 @@ function findWinningMovementMove(player) {
       }
     }
   }
+  return null;
+}
+
+function findBlockingMovementMove(aiPlayer) {
+  // Find a move where AI moves its OWN piece to block opponent from winning
+  const opponent = aiPlayer === "X" ? "O" : "X";
+
+  // For each potential winning line for the opponent
+  for (const line of winLines) {
+    const [a, b, c] = line;
+    const positions = [a, b, c];
+    const values = [board[a], board[b], board[c]];
+
+    // Check if opponent has 2 pieces in this line and one empty spot
+    const opponentCount = values.filter(v => v === opponent).length;
+    const emptyCount = values.filter(v => v === null).length;
+
+    if (opponentCount === 2 && emptyCount === 1) {
+      // Find the empty position that would complete opponent's line
+      const emptyPos = positions[values.indexOf(null)];
+
+      // Try to move one of AI's pieces to that empty position to block
+      for (let from = 0; from < 9; from++) {
+        if (board[from] === aiPlayer) {
+          // Check if this AI piece can move to the blocking position
+          return { from, to: emptyPos };
+        }
+      }
+    }
+  }
+
   return null;
 }
 
