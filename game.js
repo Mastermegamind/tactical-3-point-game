@@ -53,6 +53,8 @@ const playerXNameInput = document.getElementById("playerXName");
 const playerONameInput = document.getElementById("playerOName");
 const playerXScoreEl = document.getElementById("playerXScore");
 const playerOScoreEl = document.getElementById("playerOScore");
+const playerXScoreName = document.getElementById("playerXScoreName");
+const playerOScoreName = document.getElementById("playerOScoreName");
 
 let board = Array(9).fill(null);      // 'X' | 'O' | null
 let turn = "X";
@@ -159,10 +161,10 @@ function renderPoints() {
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("cx", p.x);
     c.setAttribute("cy", p.y);
-    c.setAttribute("r", 4.2);
-    c.setAttribute("fill", "white");
-    c.setAttribute("stroke", "black");
-    c.setAttribute("stroke-width", "1.8");
+    c.setAttribute("r", 3.5);
+    c.setAttribute("fill", "#e2e8f0");
+    c.setAttribute("stroke", "#94a3b8");
+    c.setAttribute("stroke-width", "1.5");
     c.classList.add("point");
     c.dataset.id = String(p.id);
 
@@ -174,27 +176,56 @@ function renderPoints() {
 function renderMarks() {
   marksLayer.innerHTML = "";
 
-  // marks
+  // Render pebbles
   board.forEach((val, idx) => {
     if (!val) return;
     const p = points[idx];
 
-    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    t.setAttribute("x", p.x);
-    t.setAttribute("y", p.y + 2.4);
-    t.setAttribute("text-anchor", "middle");
-    t.setAttribute("font-size", "10");
-    t.setAttribute("class", "mark");
-    t.textContent = val;
-    t.setAttribute("fill", val === "X" ? "#0d6efd" : "#d63384");
-
-    // highlight selected piece during movement
+    // Create pebble group
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.classList.add("pebble");
     if (phase === "movement" && selectedFrom === idx) {
-      t.setAttribute("stroke", "#111");
-      t.setAttribute("stroke-width", "0.7");
+      g.classList.add("selected");
     }
 
-    marksLayer.appendChild(t);
+    // Pebble colors
+    const isX = val === "X";
+    const gradient = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    const gradientId = `pebble-gradient-${idx}`;
+    gradient.setAttribute("id", gradientId);
+
+    const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+    stop1.setAttribute("offset", "0%");
+    stop1.setAttribute("stop-color", isX ? "#60a5fa" : "#f472b6");
+
+    const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+    stop2.setAttribute("offset", "100%");
+    stop2.setAttribute("stop-color", isX ? "#3b82f6" : "#ec4899");
+
+    gradient.appendChild(stop1);
+    gradient.appendChild(stop2);
+    marksLayer.appendChild(gradient);
+
+    // Main pebble circle
+    const pebble = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    pebble.setAttribute("cx", p.x);
+    pebble.setAttribute("cy", p.y);
+    pebble.setAttribute("r", 4.8);
+    pebble.setAttribute("fill", `url(#${gradientId})`);
+    pebble.setAttribute("stroke", isX ? "#2563eb" : "#db2777");
+    pebble.setAttribute("stroke-width", "1.2");
+
+    // Highlight effect
+    const highlight = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+    highlight.setAttribute("cx", p.x - 0.8);
+    highlight.setAttribute("cy", p.y - 0.8);
+    highlight.setAttribute("rx", 1.8);
+    highlight.setAttribute("ry", 1.2);
+    highlight.setAttribute("fill", "rgba(255, 255, 255, 0.5)");
+
+    g.appendChild(pebble);
+    g.appendChild(highlight);
+    marksLayer.appendChild(g);
   });
 
   // update point states and highlighting
@@ -252,9 +283,9 @@ function handlePlacement(id) {
     selectedFrom = null;
     currentMovingPlayer = "X"; // X starts first in movement phase
     if (gameMode === "pvp") {
-      statusText.textContent = "Movement Phase - X's turn";
+      statusText.textContent = `Movement Phase - ${playerXName}'s turn`;
     } else {
-      statusText.textContent = "Movement Phase - Move any piece to win!";
+      statusText.textContent = "Movement Phase - Click a pebble to move";
     }
   } else {
     // Continue placement turns
@@ -282,7 +313,8 @@ function handleMovement(clickedId) {
 
     selectedFrom = clickedId;
     renderMarks();
-    statusText.textContent = `Selected ${clickedPiece} - Click where to move`;
+    const color = clickedPiece === "X" ? "Blue" : "Pink";
+    statusText.textContent = `${color} pebble selected - Click where to move`;
     return;
   }
 
@@ -293,7 +325,8 @@ function handleMovement(clickedId) {
 
     selectedFrom = clickedId;
     renderMarks();
-    statusText.textContent = `Selected ${board[clickedId]} - Click where to move`;
+    const color = board[clickedId] === "X" ? "Blue" : "Pink";
+    statusText.textContent = `${color} pebble selected - Click where to move`;
     return;
   }
 
@@ -325,9 +358,10 @@ function handleMovement(clickedId) {
   // Switch turns in PvP mode
   if (gameMode === "pvp") {
     currentMovingPlayer = currentMovingPlayer === "X" ? "O" : "X";
-    statusText.textContent = `Movement Phase - ${currentMovingPlayer}'s turn`;
+    const nextPlayer = currentMovingPlayer === "X" ? playerXName : playerOName;
+    statusText.textContent = `Movement Phase - ${nextPlayer}'s turn`;
   } else {
-    statusText.textContent = "Movement Phase - Move any piece to win!";
+    statusText.textContent = "Click a pebble to move it";
   }
 
   renderMarks();
@@ -365,29 +399,34 @@ function endGame(message, winnerSymbol = null) {
 }
 
 function updateScoreDisplay() {
-  playerXScoreEl.textContent = `${playerXName}: ${scores.X}`;
-  playerOScoreEl.textContent = `${playerOName}: ${scores.O}`;
+  playerXScoreName.textContent = playerXName;
+  playerXScoreEl.textContent = scores.X;
+  playerOScoreName.textContent = playerOName;
+  playerOScoreEl.textContent = scores.O;
 }
 
 function updateUI() {
+  // Update turn display with color names
   if (phase === "placement") {
-    turnText.textContent = turn;
+    turnText.textContent = turn === "X" ? "Blue" : "Pink";
   } else {
     // In movement phase, show current moving player
-    turnText.textContent = gameMode === "pvp" ? currentMovingPlayer : "X";
+    const currentPlayer = gameMode === "pvp" ? currentMovingPlayer : "X";
+    turnText.textContent = currentPlayer === "X" ? "Blue" : "Pink";
   }
 
   if (!gameOver) {
     if (phase === "placement") {
       statusText.textContent =
-        `Placement Phase (${placedCount.X}/3 X, ${placedCount.O}/3 O)`;
+        `Place your pebbles (${placedCount.X}/3 Blue, ${placedCount.O}/3 Pink)`;
     } else {
       // movement
       if (selectedFrom === null) {
         if (gameMode === "pvp") {
-          statusText.textContent = `Movement Phase - ${currentMovingPlayer}'s turn`;
+          const playerName = currentMovingPlayer === "X" ? playerXName : playerOName;
+          statusText.textContent = `${playerName}'s turn to move`;
         } else {
-          statusText.textContent = `Movement Phase - Move any piece to win!`;
+          statusText.textContent = `Click a pebble to move it`;
         }
       }
     }
@@ -404,7 +443,7 @@ function resetBoard() {
   currentMovingPlayer = "X";
   computerMoving = false;
 
-  statusText.textContent = "Playing";
+  statusText.textContent = "Ready to play!";
   renderMarks();
   updateUI();
 
