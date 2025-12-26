@@ -1,0 +1,218 @@
+# Tactical Pebble Game - Full Stack Implementation
+
+A complete multiplayer tactical pebble game with user authentication, avatar management, AI opponents, matchmaking, and game history tracking.
+
+## Features
+
+### User Management
+- ✅ User registration with email, username, and password
+- ✅ Secure login system with session management
+- ✅ Avatar selection (6 preset avatars + custom upload)
+- ✅ User profile/dashboard with statistics
+- ✅ Player ratings and win/loss tracking
+
+### Game Modes
+- ✅ Player vs AI (Easy, Medium, Hard difficulties)
+- ✅ Player vs Player (Online matchmaking)
+- ✅ Automatic matchmaking based on player rating (±200 range)
+
+### Game Features
+- ✅ Full tactical pebble game implementation
+- ✅ Placement phase (3 pieces each)
+- ✅ Movement phase (strategic piece relocation)
+- ✅ Pause/Resume functionality
+- ✅ Auto-save game state
+- ✅ Exit anytime with progress saved
+- ✅ Real-time synchronization for online games
+
+### AI & Data Collection
+- ✅ Move history tracking for each game
+- ✅ AI training data collection
+- ✅ Game replay capability
+- ✅ Win pattern analysis
+- ✅ Player tactics tracking
+
+## Setup Instructions
+
+### 1. Database Setup
+
+```bash
+# Import the database schema
+mysql -u root -p < database/schema.sql
+```
+
+Or manually create the database:
+```sql
+mysql -u root -p
+source /var/www/game.test/database/schema.sql
+```
+
+### 2. Configure Environment
+
+Edit `.env` file with your database credentials:
+
+```env
+DB_HOST=localhost
+DB_NAME=game
+DB_USER=root
+DB_PASS=root
+DB_PORT=3306
+```
+
+### 3. Set Permissions
+
+```bash
+# Create upload directories
+mkdir -p uploads/avatars
+chmod 755 uploads/avatars
+
+# Ensure Apache can write to uploads
+chown -R www-data:www-data uploads/
+```
+
+### 4. Apache Configuration
+
+Ensure your virtual host is properly configured:
+
+```apache
+<VirtualHost *:80>
+    ServerName game.test
+    DocumentRoot /var/www/game.test
+
+    <Directory /var/www/game.test>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+### 5. Access the Application
+
+Navigate to: `http://game.test`
+
+## User Flow
+
+1. **Register** → Create account with username, email, password
+2. **Select Avatar** → Choose preset avatar or upload custom image
+3. **Dashboard** → View profile, stats, and game history
+4. **Game Settings** → Choose between:
+   - Player vs AI (select difficulty)
+   - Player vs Player (auto-matchmaking)
+5. **Play** → Game interface with pause/exit buttons
+6. **Game saves automatically** on every move
+
+## File Structure
+
+```
+/var/www/game.test/
+├── index.php              # Original simple game (now redirects)
+├── register.php           # User registration page
+├── login.php              # User login page
+├── select-avatar.php      # Avatar selection/upload
+├── dashboard.php          # User profile & stats
+├── game-settings.php      # Game mode selection
+├── play.php               # Main game interface
+├── game.js                # Original game logic
+├── game-engine.js         # Enhanced game logic with save system
+├── config/
+│   └── database.php       # Database connection handler
+├── api/
+│   ├── register.php       # Registration endpoint
+│   ├── login.php          # Login endpoint
+│   ├── logout.php         # Logout endpoint
+│   ├── save-avatar.php    # Avatar upload/save
+│   ├── join-matchmaking.php    # Join matchmaking queue
+│   ├── check-match.php         # Check for opponent match
+│   ├── leave-matchmaking.php   # Leave matchmaking
+│   ├── save-game-state.php     # Save game progress
+│   ├── get-game-state.php      # Load game state
+│   └── save-move.php           # Record move history
+├── database/
+│   └── schema.sql         # Database schema
+├── uploads/
+│   └── avatars/           # User uploaded avatars
+├── .env                   # Environment configuration
+└── README.md              # This file
+```
+
+## Database Tables
+
+- **users** - User accounts and stats
+- **game_sessions** - Active and completed games
+- **game_moves** - Move-by-move history for AI training
+- **matchmaking_queue** - Online matchmaking queue
+- **user_settings** - User preferences
+- **ai_training_data** - Aggregated AI training data
+
+## API Endpoints
+
+### Authentication
+- `POST /api/register.php` - Create new account
+- `POST /api/login.php` - User login
+- `GET /api/logout.php` - User logout
+
+### Avatar Management
+- `POST /api/save-avatar.php` - Upload/select avatar
+
+### Matchmaking
+- `POST /api/join-matchmaking.php` - Join PvP queue
+- `GET /api/check-match.php` - Poll for match
+- `POST /api/leave-matchmaking.php` - Leave queue
+
+### Game Management
+- `POST /api/save-game-state.php` - Save current game
+- `GET /api/get-game-state.php` - Load game state
+- `POST /api/save-move.php` - Record move for history
+
+## Game Rules
+
+1. **Placement Phase**: Players alternate placing 3 pieces each
+2. **Movement Phase**: Players take turns moving any piece to any empty spot
+3. **Win Condition**: Align 3 pieces in a row (horizontal, vertical, or diagonal)
+4. **Tactics**: Strategic positioning and blocking opponent
+
+## AI Difficulty Levels
+
+- **Easy**: Random moves with slight center preference
+- **Medium**: 60% strategic, 40% random
+- **Hard**: Full strategic AI (win, block, optimize)
+
+## Features to Add (Future)
+
+- [ ] Game replay animation viewer
+- [ ] Live chat during online games
+- [ ] Tournament mode
+- [ ] Leaderboards
+- [ ] Friend system
+- [ ] Game invitations
+- [ ] Sound effects and music
+- [ ] Mobile app version
+
+## Security Features
+
+- Password hashing (bcrypt)
+- SQL injection protection (prepared statements)
+- Session management
+- File upload validation
+- CSRF protection (recommended to add)
+- XSS protection (HTML escaping)
+
+## Browser Support
+
+- Chrome/Edge (latest)
+- Firefox (latest)
+- Safari (latest)
+- Mobile browsers (responsive design)
+
+## Credits
+
+Built with:
+- PHP 7.4+
+- MySQL 5.7+
+- Bootstrap 5.3
+- Vanilla JavaScript
+- Inter Font (Google Fonts)
+
+## License
+
+MIT License - Feel free to use and modify

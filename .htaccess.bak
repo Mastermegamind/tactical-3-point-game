@@ -1,0 +1,14 @@
+# Apache configuration for Tactical Pebble Game
+
+# Protect sensitive files
+<Files ".env">
+    Require all denied
+</Files>
+
+<Files ".git">
+    Require all denied
+</Files>
+
+<Files "schema.sql">
+    Require all denied
+</Files>

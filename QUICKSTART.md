@@ -1,0 +1,187 @@
+# Quick Start Guide
+
+Get started with Tactical Pebble Game in 5 minutes!
+
+## Installation
+
+### 1. One-Click Setup (Easiest)
+
+Visit: **http://game.test/setup.php**
+
+Click "Initialize Database" and you're done!
+
+### 2. Manual Setup
+
+```bash
+# Edit database config
+nano .env
+
+# Import database
+mysql -u root -p < database/schema.sql
+
+# Set permissions
+chmod 755 uploads/avatars
+```
+
+## Getting Started
+
+### 1. Create Account
+- Visit http://game.test
+- Click "Create Account"
+- Enter username, email, password
+- Click "Create Account"
+
+### 2. Choose Avatar
+- Select from 6 preset avatars, OR
+- Upload your own image (PNG/JPG, max 5MB)
+- Click "Continue"
+
+### 3. Start Playing
+
+You'll see your dashboard with:
+- Your profile and stats
+- Game history
+- "Start New Game" button
+
+### 4. Choose Game Mode
+
+**Play vs AI:**
+1. Click "Start New Game"
+2. Select "Player vs AI"
+3. Choose difficulty (Easy, Medium, Hard)
+4. Click "Start Game"
+
+**Play vs Player:**
+1. Click "Start New Game"
+2. Select "Player vs Player"
+3. Wait for matchmaking (usually <30 seconds)
+4. Game starts when opponent found!
+
+## How to Play
+
+### Placement Phase
+1. Players take turns placing 3 pebbles each
+2. Click any empty point to place your pebble
+3. Try to position strategically!
+
+### Movement Phase
+1. After both players place 3 pebbles, movement begins
+2. Click YOUR pebble to select it (gets red outline)
+3. Click any empty spot to move it there
+4. Try to align 3 in a row!
+
+### Winning
+Get 3 of your pebbles in a row:
+- Horizontal
+- Vertical
+- Diagonal
+
+## Game Controls
+
+**During Game:**
+- **Pause Button** - Pause and save progress
+- **Exit Button** - Save and exit to dashboard
+
+**Game saves automatically** after every move!
+
+## Features to Explore
+
+### 1. View Stats
+Your dashboard shows:
+- Wins / Losses / Draws
+- Win rate percentage
+- Player rating
+
+### 2. Game History
+- See all your past games
+- Click "Replay" to watch any game
+- Control playback speed
+
+### 3. Change Avatar
+- Click "Change Avatar" in dashboard
+- Upload new or select different preset
+- Updates immediately
+
+### 4. Matchmaking
+- Based on your rating (±200 points)
+- Fair matches
+- Auto-pairing
+
+## Tips & Strategies
+
+### Placement Phase
+✅ Take the center if possible (connects to most positions)
+✅ Form lines that can be completed
+✅ Block opponent's potential lines
+❌ Don't place all 3 in a line immediately (can be blocked)
+
+### Movement Phase
+✅ Create multiple threat lines
+✅ Force opponent into defensive moves
+✅ Move pieces to create 2-way win opportunities
+❌ Don't make random moves without purpose
+
+## Difficulty Levels
+
+**Easy**: Random moves, good for beginners
+**Medium**: Mix of strategy and random, good practice
+**Hard**: Full strategic AI, challenging!
+
+## Keyboard Shortcuts
+
+None currently - all mouse/touch controlled
+
+## Troubleshooting
+
+**Can't login?**
+- Check username/email and password
+- Try "Create Account" if first time
+
+**Matchmaking taking too long?**
+- Wait up to 60 seconds
+- Try different time of day
+- Play vs AI while waiting
+
+**Game not saving?**
+- Check internet connection
+- Try refreshing page
+- Contact administrator
+
+**Upload failed?**
+- Check file is PNG or JPG
+- Ensure file is under 5MB
+- Try different image
+
+## FAQ
+
+**Q: Can I play offline?**
+A: No, all games are saved to the server
+
+**Q: Can I play on mobile?**
+A: Yes! Fully responsive design
+
+**Q: How is rating calculated?**
+A: Win = +25, Loss = -10, Draw = 0
+
+**Q: Can I delete my account?**
+A: Contact administrator
+
+**Q: Is my data private?**
+A: Yes, passwords are encrypted
+
+**Q: Can I change my username?**
+A: Not currently, contact admin
+
+**Q: How do I invite friends?**
+A: Share the website URL, they create account and matchmaking will pair you (if similar rating)
+
+## Support
+
+For issues or questions:
+- Check [INSTALLATION.md](INSTALLATION.md) for setup issues
+- Check [README.md](README.md) for feature documentation
+- Check logs: `tail -f /var/log/apache2/error.log`
+
+## Have Fun!
+
+Enjoy playing Tactical Pebble Game! 🎮

@@ -1,0 +1,336 @@
+# Installation Guide - Tactical Pebble Game
+
+Complete step-by-step guide to set up the Tactical Pebble Game on your server.
+
+## Prerequisites
+
+- **PHP 7.4 or higher** with PDO MySQL extension
+- **MySQL 5.7 or higher** (or MariaDB 10.2+)
+- **Apache** web server with mod_rewrite enabled
+- **Composer** (optional, for future dependencies)
+
+## Quick Setup (Recommended)
+
+### Step 1: Navigate to Setup Page
+
+1. Open your browser and go to: `http://game.test/setup.php`
+2. Follow the on-screen instructions
+3. Click "Initialize Database"
+4. Once complete, click "Go to Registration"
+
+That's it! Your game is ready to use.
+
+## Manual Setup
+
+If you prefer manual installation or the quick setup doesn't work:
+
+### Step 1: Clone/Download Files
+
+Ensure all files are in `/var/www/game.test/` (or your web root).
+
+### Step 2: Configure Database
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your database credentials:
+   ```env
+   DB_HOST=localhost
+   DB_NAME=game
+   DB_USER=root
+   DB_PASS=your_password
+   DB_PORT=3306
+   ```
+
+### Step 3: Create Database
+
+#### Option A: Using MySQL Command Line
+
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+#### Option B: Using phpMyAdmin
+
+1. Open phpMyAdmin
+2. Create a new database named `game` (or your chosen name from `.env`)
+3. Import `database/schema.sql`
+
+#### Option C: Manual SQL Execution
+
+```bash
+mysql -u root -p
+```
+
+Then in MySQL prompt:
+```sql
+CREATE DATABASE game;
+USE game;
+source /var/www/game.test/database/schema.sql;
+```
+
+### Step 4: Set File Permissions
+
+```bash
+# Create upload directories
+mkdir -p uploads/avatars
+
+# Set permissions
+chmod 755 uploads/avatars
+chown -R www-data:www-data uploads/
+
+# Make sure .env is readable
+chmod 644 .env
+```
+
+### Step 5: Configure Apache
+
+Ensure your Apache virtual host is set up correctly:
+
+```apache
+<VirtualHost *:80>
+    ServerName game.test
+    ServerAlias www.game.test
+    DocumentRoot /var/www/game.test
+
+    <Directory /var/www/game.test>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/game_error.log
+    CustomLog ${APACHE_LOG_DIR}/game_access.log combined
+</VirtualHost>
+```
+
+Enable the site and restart Apache:
+```bash
+sudo a2ensite game.test.conf
+sudo systemctl restart apache2
+```
+
+### Step 6: Test Installation
+
+1. Visit `http://game.test/register.php`
+2. Create a test account
+3. Select an avatar
+4. Start playing!
+
+## Troubleshooting
+
+### Database Connection Failed
+
+**Error:** "Database connection failed"
+
+**Solutions:**
+- Verify `.env` credentials are correct
+- Check MySQL service is running: `sudo systemctl status mysql`
+- Ensure user has permissions: `GRANT ALL ON game.* TO 'root'@'localhost';`
+
+### Upload Directory Not Writable
+
+**Error:** "Failed to upload file"
+
+**Solution:**
+```bash
+sudo chown -R www-data:www-data /var/www/game.test/uploads
+sudo chmod -R 755 /var/www/game.test/uploads
+```
+
+### Apache Forbidden Error
+
+**Error:** "403 Forbidden"
+
+**Solution:**
+```bash
+sudo chmod 755 /var/www/game.test
+sudo chmod 644 /var/www/game.test/*.php
+```
+
+### Database Tables Not Created
+
+**Solution:**
+```bash
+# Re-run schema
+mysql -u root -p game < database/schema.sql
+```
+
+### Session Issues / Login Not Working
+
+**Solutions:**
+- Check PHP session directory is writable:
+  ```bash
+  sudo chmod 1733 /var/lib/php/sessions
+  ```
+- Verify `session.save_path` in php.ini
+
+## Verifying Installation
+
+Run these checks to ensure everything is working:
+
+### 1. Check Database Connection
+
+Create a test file `test-db.php`:
+```php
+<?php
+require_once 'config/database.php';
+try {
+    $db = Database::getInstance();
+    echo "Database connection successful!";
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
+```
+
+Visit `http://game.test/test-db.php`
+
+### 2. Check File Permissions
+
+```bash
+ls -la uploads/avatars
+```
+
+Should show: `drwxr-xr-x` with `www-data` as owner
+
+### 3. Check Tables
+
+```bash
+mysql -u root -p game -e "SHOW TABLES;"
+```
+
+Should show:
+- users
+- game_sessions
+- game_moves
+- matchmaking_queue
+- user_settings
+- ai_training_data
+
+## Security Checklist
+
+After installation:
+
+- [ ] Change default database password in `.env`
+- [ ] Ensure `.env` is not publicly accessible (add to .htaccess)
+- [ ] Remove `setup.php` after initial setup
+- [ ] Enable HTTPS (recommended for production)
+- [ ] Set up regular database backups
+- [ ] Review file permissions
+- [ ] Enable PHP error logging (disable display_errors in production)
+
+## Post-Installation Configuration
+
+### Enable HTTPS (Production)
+
+```bash
+sudo apt install certbot python3-certbot-apache
+sudo certbot --apache -d game.test
+```
+
+### Set Up Cron Jobs (Optional)
+
+Clean up old matchmaking entries:
+```bash
+# Add to crontab: crontab -e
+*/5 * * * * php /var/www/game.test/cron/cleanup-matchmaking.php
+```
+
+### Performance Optimization
+
+1. Enable PHP OPcache:
+   ```ini
+   ; In php.ini
+   opcache.enable=1
+   opcache.memory_consumption=128
+   ```
+
+2. Enable MySQL query cache (if using MySQL 5.7):
+   ```ini
+   ; In my.cnf
+   query_cache_type=1
+   query_cache_size=64M
+   ```
+
+## Development vs Production
+
+### Development Settings (.env)
+
+```env
+APP_ENV=development
+DEBUG=true
+```
+
+### Production Settings (.env)
+
+```env
+APP_ENV=production
+DEBUG=false
+```
+
+Update `php.ini` for production:
+```ini
+display_errors = Off
+log_errors = On
+error_log = /var/log/php/error.log
+```
+
+## Updating the Application
+
+When updating to a new version:
+
+1. Backup database:
+   ```bash
+   mysqldump -u root -p game > backup_$(date +%Y%m%d).sql
+   ```
+
+2. Backup files:
+   ```bash
+   tar -czf backup_files_$(date +%Y%m%d).tar.gz /var/www/game.test
+   ```
+
+3. Pull/download new files
+
+4. Run any new migrations (if provided)
+
+5. Clear cache/sessions if needed
+
+## Uninstalling
+
+To completely remove the application:
+
+```bash
+# Remove database
+mysql -u root -p -e "DROP DATABASE game;"
+
+# Remove files
+sudo rm -rf /var/www/game.test
+
+# Disable Apache site
+sudo a2dissite game.test.conf
+sudo systemctl reload apache2
+```
+
+## Getting Help
+
+If you encounter issues:
+
+1. Check Apache error log: `tail -f /var/log/apache2/error.log`
+2. Check PHP error log: `tail -f /var/log/php/error.log`
+3. Check MySQL error log: `tail -f /var/log/mysql/error.log`
+4. Review this guide's troubleshooting section
+5. Check GitHub issues: https://github.com/yourusername/tactical-pebble-game/issues
+
+## Next Steps
+
+After successful installation:
+
+1. Create your first user account
+2. Customize avatars
+3. Play against AI to test
+4. Invite friends for PvP matches
+5. Check game history and replays
+
+Enjoy playing Tactical Pebble Game!
