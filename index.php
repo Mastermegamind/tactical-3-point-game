@@ -157,11 +157,6 @@
     .point {
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      transform-origin: center;
-    }
-
-    .point:hover:not(.disabled) {
-      transform: scale(1.15);
     }
 
     .point.disabled {
@@ -173,10 +168,20 @@
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
+      transform-origin: center;
+    }
+
+    .pebble:hover {
+      transform: scale(1.15);
+    }
+
+    .pebble.selected circle:first-of-type {
+      stroke: #ef4444 !important;
+      stroke-width: 2.5 !important;
+      filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
     }
 
     .pebble.selected {
-      filter: drop-shadow(0 4px 12px rgba(102, 126, 234, 0.5));
       animation: pulse 1s ease-in-out infinite;
     }
 

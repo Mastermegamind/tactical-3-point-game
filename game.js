@@ -188,6 +188,14 @@ function renderMarks() {
       g.classList.add("selected");
     }
 
+    // Add click handler for movement phase
+    if (phase === "movement") {
+      g.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onPointClick(idx);
+      });
+    }
+
     // Pebble colors
     const isX = val === "X";
     const gradient = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
@@ -464,11 +472,11 @@ function isComputerTurn() {
 }
 
 function makeComputerMove() {
+  // Don't make moves in PvP mode
+  if (gameMode === "pvp") return;
+
   // In placement phase, check if it's computer's turn
   if (phase === "placement" && !isComputerTurn()) return;
-
-  // In movement phase, only allow one computer move at a time
-  if (phase === "movement" && (gameMode === "pvp" || computerMoving)) return;
 
   // Prevent multiple simultaneous computer moves
   if (computerMoving) return;
