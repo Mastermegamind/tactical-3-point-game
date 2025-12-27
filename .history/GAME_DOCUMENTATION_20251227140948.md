@@ -1,4 +1,4 @@
-# Okwe - Tactical Pebble Game - Complete Documentation
+# Tactical Pebble Game - Complete Documentation
 
 ## Overview
 A strategic two-player tic-tac-toe variant where players place and move pebbles on a 3x3 grid. The game has two distinct phases: placement and movement.

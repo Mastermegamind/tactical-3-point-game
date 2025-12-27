@@ -1,6 +1,6 @@
 # Game Improvements - Two-Session Placement & Victory Modal
 
-This document outlines the recent improvements made to the Okwe - Tactical Pebble Game.
+This document outlines the recent improvements made to the Tactical Pebble Game.
 
 ---
 

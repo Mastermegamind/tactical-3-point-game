@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin Login - Okwe - Tactical Pebble Game</title>
+    <title>Admin Login - Tactical Pebble Game</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-card">
         <div class="login-header">
             <h1>🔐 Admin Panel</h1>
-            <p>Okwe - Tactical Pebble Game</p>
+            <p>Tactical Pebble Game</p>
             <span class="admin-badge">Administrative Access</span>
         </div>
 

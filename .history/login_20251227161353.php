@@ -12,30 +12,30 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Okwe - Tactical Pebble Game</title>
-        <meta name="description" content="Play Okwe - Tactical Pebble Game - A strategic two-player tic-tac-toe variant with placement and movement phases. Challenge friends or compete against AI.">
+    <title>Login - Tactical Pebble Game</title>
+        <meta name="description" content="Play Tactical Pebble Game - A strategic two-player tic-tac-toe variant with placement and movement phases. Challenge friends or compete against AI.">
 
     <!-- Open Graph (OG) -->
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Okwe - MegaMind Technologies LTD">
-    <meta property="og:title" content="Okwe - Strategic Multiplayer Tic-Tac-Toe">
-    <meta property="og:description" content="Play Okwe - Tactical Pebble Game - A strategic two-player game with placement and movement phases. Challenge friends online or compete against AI opponents.">
-    <meta property="og:url" content="https://game.megamindtechnologies.com">
-    <meta property="og:image" content="https://game.megamindtechnologies.com/assets/seo.png">
-    <meta property="og:image:width" content="300">
-    <meta property="og:image:height" content="300">
+    <meta property="og:site_name" content="MegaMind Technologies LTD">
+    <meta property="og:title" content="Tactical Pebble Game - Strategic Multiplayer Tic-Tac-Toe">
+    <meta property="og:description" content="Play Tactical Pebble Game - A strategic two-player game with placement and movement phases. Challenge friends online or compete against AI opponents.">
+    <meta property="og:url" content="https://game.test">
+    <meta property="og:image" content="https://game.test/assets/preview.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_US">
-    <meta property="og:image:alt" content="Okwe - Tactical Pebble Game - Strategic multiplayer board game interface">
+    <meta property="og:image:alt" content="Tactical Pebble Game - Strategic multiplayer board game interface">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Okwe - Tactical Pebble Game - Strategic Multiplayer Tic-Tac-Toe">
-    <meta name="twitter:description" content="Play Okwe - Tactical Pebble Game - Challenge friends online or compete against AI opponents in this strategic board game.">
-    <meta name="twitter:image" content="https://game.megamindtechnologies.com/assets/seo.png">
-    <meta name="twitter:site" content="@okwegame">
+    <meta name="twitter:title" content="Tactical Pebble Game - Strategic Multiplayer Tic-Tac-Toe">
+    <meta name="twitter:description" content="Play Tactical Pebble Game - Challenge friends online or compete against AI opponents in this strategic board game.">
+    <meta name="twitter:image" content="https://game.test/assets/preview.jpg">
+    <meta name="twitter:site" content="@megamindtech">
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://game.megamindtechnologies.com">
+    <link rel="canonical" href="https://game.test">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

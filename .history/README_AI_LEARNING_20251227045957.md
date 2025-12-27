@@ -1,6 +1,6 @@
 # AI Learning System - Complete Implementation
 
-This README provides an overview of the AI learning system implementation for the Okwe - Tactical Pebble Game.
+This README provides an overview of the AI learning system implementation for the Tactical Pebble Game.
 
 ---
 
@@ -434,7 +434,7 @@ $isAdmin = in_array($_SESSION['user_id'], $adminIds);
 
 ## 🎉 Conclusion
 
-The AI learning system is now fully integrated into your Okwe - Tactical Pebble Game!
+The AI learning system is now fully integrated into your Tactical Pebble Game!
 
 ### Next Steps
 

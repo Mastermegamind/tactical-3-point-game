@@ -1,6 +1,6 @@
 # AI Learning System Documentation
 
-This document explains how the AI learning system works in the Okwe - Tactical Pebble Game.
+This document explains how the AI learning system works in the Tactical Pebble Game.
 
 ---
 

@@ -3,7 +3,7 @@ require_once __DIR__ . '/config/session.php';
 
 // Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
-    header('Location: dashboard.php');
+    header('Location: select-avatar.php');
     exit;
 }
 ?>
@@ -12,30 +12,7 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Okwe - Tactical Pebble Game</title>
-        <meta name="description" content="Play Okwe - Tactical Pebble Game - A strategic two-player tic-tac-toe variant with placement and movement phases. Challenge friends or compete against AI.">
-
-    <!-- Open Graph (OG) -->
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Okwe - MegaMind Technologies LTD">
-    <meta property="og:title" content="Okwe - Strategic Multiplayer Tic-Tac-Toe">
-    <meta property="og:description" content="Play Okwe - Tactical Pebble Game - A strategic two-player game with placement and movement phases. Challenge friends online or compete against AI opponents.">
-    <meta property="og:url" content="https://game.megamindtechnologies.com">
-    <meta property="og:image" content="https://game.megamindtechnologies.com/assets/seo.png">
-    <meta property="og:image:width" content="300">
-    <meta property="og:image:height" content="300">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:image:alt" content="Okwe - Tactical Pebble Game - Strategic multiplayer board game interface">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Okwe - Tactical Pebble Game - Strategic Multiplayer Tic-Tac-Toe">
-    <meta name="twitter:description" content="Play Okwe - Tactical Pebble Game - Challenge friends online or compete against AI opponents in this strategic board game.">
-    <meta name="twitter:image" content="https://game.megamindtechnologies.com/assets/seo.png">
-    <meta name="twitter:site" content="@okwegame">
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://game.megamindtechnologies.com">
+    <title>Register - Tactical Pebble Game</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -150,40 +127,57 @@ if (isset($_SESSION['user_id'])) {
 <body>
     <div class="auth-card">
         <div class="auth-header">
-            <h1 class="auth-title">Welcome Back</h1>
-            <p class="auth-subtitle">Sign in to continue playing</p>
+            <h1 class="auth-title">Create Account</h1>
+            <p class="auth-subtitle">Join the Tactical Pebble Game community</p>
         </div>
 
         <div id="alert-container"></div>
 
-        <form id="loginForm">
+        <form id="registerForm">
             <div class="mb-3">
-                <label for="login" class="form-label">Username or Email</label>
-                <input type="text" class="form-control" id="login" name="login" required>
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required minlength="3" maxlength="50">
+                <div class="invalid-feedback">Username must be 3-50 characters long.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <div class="invalid-feedback">Please enter a valid email address.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                    <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
+                </div>
+                <div class="invalid-feedback">Password must be at least 6 characters long.</div>
             </div>
 
             <div class="mb-4">
-                <label for="password" class="form-label">Password</label>
+                <label for="confirm_password" class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
-                    <input type="password" class="form-control" id="password" name="password" required>
-                    <span class="password-toggle" onclick="togglePassword()">👁️</span>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    <span class="password-toggle" onclick="togglePassword('confirm_password')">👁️</span>
                 </div>
+                <div class="invalid-feedback">Passwords do not match.</div>
             </div>
 
             <button type="submit" class="btn btn-primary-custom mb-3" id="submitBtn">
-                Sign In
+                Create Account
             </button>
 
             <div class="text-center">
-                <span class="text-muted">Don't have an account?</span>
-                <a href="register.php" class="link-custom">Create Account</a>
+                <span class="text-muted">Already have an account?</span>
+                <a href="login.php" class="link-custom">Sign In</a>
             </div>
         </form>
     </div>
 
     <script>
-        function togglePassword() {
-            const field = document.getElementById('password');
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
             field.type = field.type === 'password' ? 'text' : 'password';
         }
 
@@ -197,17 +191,25 @@ if (isset($_SESSION['user_id'])) {
             document.getElementById('alert-container').innerHTML = alertHtml;
         }
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match!');
+                return;
+            }
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Signing In...';
+            submitBtn.textContent = 'Creating Account...';
 
             const formData = new FormData(this);
 
             try {
-                const response = await fetch('api/login.php', {
+                const response = await fetch('api/register.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -215,19 +217,19 @@ if (isset($_SESSION['user_id'])) {
                 const data = await response.json();
 
                 if (data.success) {
-                    showAlert('Login successful! Redirecting...', 'success');
+                    showAlert('Account created successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = 'dashboard.php';
-                    }, 1000);
+                        window.location.href = 'select-avatar.php';
+                    }, 1500);
                 } else {
-                    showAlert(data.message || 'Login failed. Please try again.');
+                    showAlert(data.message || 'Registration failed. Please try again.');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Sign In';
+                    submitBtn.textContent = 'Create Account';
                 }
             } catch (error) {
                 showAlert('An error occurred. Please try again.');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign In';
+                submitBtn.textContent = 'Create Account';
             }
         });
     </script>
