@@ -447,6 +447,11 @@ const IS_ONLINE = <?= $isOnlineGame ? 'true' : 'false' ?>;
 const PLAYER_SIDE = '<?= $playerSide ?>';
 const COMPUTER_PLAYER = 'O';
 const USER_ID = <?= $_SESSION['user_id'] ?>;
+<?php if ($isOnlineGame && isset($session['player1_id']) && isset($session['player2_id'])): ?>
+const OPPONENT_ID = <?= ($session['player1_id'] == $_SESSION['user_id']) ? $session['player2_id'] : $session['player1_id'] ?>;
+<?php else: ?>
+const OPPONENT_ID = null;
+<?php endif; ?>
 
 // Player names for display
 const PLAYER_X_NAME = '<?= $playerSide === 'X' ? htmlspecialchars($currentUser['username'], ENT_QUOTES) : ($isOnlineGame && $opponent ? htmlspecialchars($opponent['name'], ENT_QUOTES) : 'Blue') ?>';
@@ -565,24 +570,74 @@ if (IS_ONLINE) {
     checkOpponentStatus();
     setInterval(checkOpponentStatus, 10000);
 
-    // Sync game state every 2 seconds
+    // Sync game state every 1 second for real-time gameplay
     setInterval(async () => {
-        if (gameOver) return;
-
         try {
             const response = await fetch(`api/get-game-state.php?session_id=${SESSION_ID}`);
             const data = await response.json();
 
-            if (data.success && data.board_state) {
-                const state = JSON.parse(data.board_state);
-                if (JSON.stringify(state.board) !== JSON.stringify(board)) {
-                    loadGameState(state);
+            if (data.success) {
+                // Check if game status changed to completed
+                if (data.status === 'completed' && !gameOver) {
+                    // Game ended, reload state to show winner
+                    if (data.board_state) {
+                        const state = JSON.parse(data.board_state);
+                        board = state.board || board;
+
+                        // Determine winner based on winner_id from database
+                        gameOver = true;
+
+                        // Check if current user won
+                        const isPlayerWin = (data.winner_id && data.winner_id == USER_ID);
+
+                        // Determine winner symbol
+                        let winnerSide;
+                        if (data.winner_id == null) {
+                            // Draw
+                            winnerSide = null;
+                        } else if (isPlayerWin) {
+                            // Current player won
+                            winnerSide = PLAYER_SIDE;
+                        } else {
+                            // Opponent won
+                            winnerSide = (PLAYER_SIDE === 'X' ? 'O' : 'X');
+                        }
+
+                        const winnerName = winnerSide ? getPlayerName(winnerSide) : 'Draw';
+
+                        renderMarks();
+                        updateUI();
+
+                        // Show game result modal
+                        setTimeout(() => {
+                            showGameResultModal(winnerSide, isPlayerWin, winnerName);
+                        }, 500);
+                    }
+                } else if (data.board_state && !gameOver) {
+                    // Normal game state sync
+                    const state = JSON.parse(data.board_state);
+                    const boardChanged = JSON.stringify(state.board) !== JSON.stringify(board);
+
+                    if (boardChanged) {
+                        // Update game state
+                        board = state.board || board;
+                        placedCount = state.placedCount || placedCount;
+                        phase = state.phase || phase;
+                        turn = state.turn || turn;
+                        currentMovingPlayer = state.currentMovingPlayer || currentMovingPlayer;
+                        selectedFrom = null;
+
+                        renderMarks();
+                        updateUI();
+
+                        console.log('Game state synced:', { phase, turn, placedCount });
+                    }
                 }
             }
         } catch (error) {
             console.error('Failed to sync game state:', error);
         }
-    }, 2000);
+    }, 1000); // Changed to 1 second for real-time experience
 }
 
 // Listen for AI reasoning events
@@ -699,8 +754,8 @@ function formatTime(timestamp) {
 if (IS_ONLINE) {
     // Load initial messages
     loadChatMessages();
-    // Poll for new messages every 2 seconds
-    setInterval(loadChatMessages, 2000);
+    // Poll for new messages every 1 second for real-time chat
+    setInterval(loadChatMessages, 1000);
 }
 
 // ===== REMATCH FUNCTIONALITY =====

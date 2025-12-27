@@ -42,3 +42,4 @@ package-lock.json
 # Test files
 test-*.php
 debug.php
+game.test.zip

@@ -463,7 +463,7 @@ async function endGame(winnerSymbol) {
 
     if (IS_ONLINE) {
       // In online mode, winner is current user if they won, otherwise it's the opponent
-      winnerId = (winnerSymbol === PLAYER_SIDE) ? USER_ID : null;
+      winnerId = (winnerSymbol === PLAYER_SIDE) ? USER_ID : OPPONENT_ID;
     } else if (GAME_MODE.startsWith('pvc')) {
       // In AI mode, winner is current user if X won, null if AI (O) won
       winnerId = (winnerSymbol === "X") ? USER_ID : null;
@@ -498,15 +498,16 @@ function showGameResultModal(winnerSymbol, isPlayerWin, winnerName) {
   const player1Name = PLAYER_X_NAME;
   const player2Name = PLAYER_O_NAME;
 
-  // Determine icon and title
-  const icon = isPlayerWin ? 'success' : 'error';
-  const title = isPlayerWin ? '🎉 Victory!' : '😔 Defeat';
+  // Determine icon and title based on result
+  const isDraw = (winnerSymbol === null);
+  const icon = isDraw ? 'info' : (isPlayerWin ? 'success' : 'error');
+  const title = isDraw ? '🤝 Draw!' : (isPlayerWin ? '🎉 Victory!' : '😔 Defeat');
 
   // Create HTML content for the modal
   const htmlContent = `
     <div style="text-align: center; padding: 1rem;">
       <h3 style="color: #667eea; margin-bottom: 1.5rem; font-weight: 700;">
-        ${winnerName} Wins!
+        ${isDraw ? 'It\'s a Draw!' : winnerName + ' Wins!'}
       </h3>
 
       <div style="background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
@@ -535,9 +536,11 @@ function showGameResultModal(winnerSymbol, isPlayerWin, winnerName) {
         </div>
       </div>
 
-      ${isPlayerWin ?
-        '<div style="margin-top: 1rem; padding: 1rem; background: #d1f4e0; border-radius: 8px; color: #1e7e34; font-weight: 600;">+25 Rating Points</div>' :
-        '<div style="margin-top: 1rem; padding: 1rem; background: #f8d7da; border-radius: 8px; color: #721c24; font-weight: 600;">-10 Rating Points</div>'
+      ${isDraw ?
+        '<div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 8px; color: #004085; font-weight: 600;">No Rating Change</div>' :
+        (isPlayerWin ?
+          '<div style="margin-top: 1rem; padding: 1rem; background: #d1f4e0; border-radius: 8px; color: #1e7e34; font-weight: 600;">+25 Rating Points</div>' :
+          '<div style="margin-top: 1rem; padding: 1rem; background: #f8d7da; border-radius: 8px; color: #721c24; font-weight: 600;">-10 Rating Points</div>')
       }
     </div>
   `;
