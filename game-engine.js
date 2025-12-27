@@ -278,6 +278,10 @@ async function handlePlacement(id) {
   board[id] = currentPlayer;
   placedCount[currentPlayer]++;
 
+  // Render immediately before saving
+  renderMarks();
+  updateUI();
+
   // Save move to database
   await recordMove('placement', null, id, boardBefore, 0, currentPlayer);
 

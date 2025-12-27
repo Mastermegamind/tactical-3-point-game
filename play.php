@@ -614,11 +614,14 @@ if (IS_ONLINE) {
                         }, 500);
                     }
                 } else if (data.board_state && !gameOver) {
-                    // Normal game state sync
+                    // Normal game state sync - only update if opponent made a move
                     const state = JSON.parse(data.board_state);
+
+                    // Check if this is an opponent's move (turn in database is now ours)
+                    const isOpponentMove = state.turn === PLAYER_SIDE && turn !== PLAYER_SIDE;
                     const boardChanged = JSON.stringify(state.board) !== JSON.stringify(board);
 
-                    if (boardChanged) {
+                    if (boardChanged || isOpponentMove) {
                         // Update game state
                         board = state.board || board;
                         placedCount = state.placedCount || placedCount;
@@ -630,7 +633,7 @@ if (IS_ONLINE) {
                         renderMarks();
                         updateUI();
 
-                        console.log('Game state synced:', { phase, turn, placedCount });
+                        console.log('Game state synced from opponent:', { phase, turn, placedCount });
                     }
                 }
             }
