@@ -9,6 +9,6 @@
     Require all denied
 </Files>
 
-<Files ".sql">
+<Files "schema.sql">
     Require all denied
 </Files>
