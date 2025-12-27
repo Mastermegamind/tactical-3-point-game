@@ -249,8 +249,20 @@ function renderMarks() {
 function onPointClick(id) {
   if (gameOver) return;
 
-  // In online mode, only allow moves if it's your turn
-  if (IS_ONLINE && turn !== PLAYER_SIDE) {
+  // In online mode during placement phase, check if player has pebbles left to place
+  if (IS_ONLINE && phase === "placement") {
+    // Allow placement if it's your turn AND you have pebbles left
+    if (turn !== PLAYER_SIDE) {
+      statusText.textContent = "Wait for opponent's turn";
+      return;
+    }
+    // Also check if you still have pebbles to place
+    if (placedCount[PLAYER_SIDE] >= 3) {
+      statusText.textContent = "Waiting for opponent to finish placement";
+      return;
+    }
+  } else if (IS_ONLINE && turn !== PLAYER_SIDE) {
+    // In movement phase, strict turn checking
     statusText.textContent = "Wait for opponent's turn";
     return;
   }
@@ -277,6 +289,13 @@ async function handlePlacement(id) {
   const currentPlayer = turn;
   board[id] = currentPlayer;
   placedCount[currentPlayer]++;
+
+  console.log(`Placed ${currentPlayer} at position ${id}. Counts:`, placedCount);
+
+  // Mark timestamp to prevent sync conflicts
+  if (typeof lastLocalMoveTime !== 'undefined') {
+    lastLocalMoveTime = Date.now();
+  }
 
   // Render immediately before saving
   renderMarks();
@@ -382,6 +401,15 @@ async function handleMovement(clickedId) {
   board[to] = board[from];
   board[from] = null;
   selectedFrom = null;
+
+  // Mark timestamp to prevent sync conflicts
+  if (typeof lastLocalMoveTime !== 'undefined') {
+    lastLocalMoveTime = Date.now();
+  }
+
+  // Render immediately
+  renderMarks();
+  updateUI();
 
   // Save move with the player who actually made the move
   const thinkTime = Date.now() - moveStartTime;

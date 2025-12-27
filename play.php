@@ -460,6 +460,10 @@ const PLAYER_O_NAME = '<?= $playerSide === 'O' ? htmlspecialchars($currentUser['
 // AI Difficulty from game settings
 const AI_DIFFICULTY = '<?= $_GET['difficulty'] ?? 'medium' ?>';
 
+// Track last local move to prevent sync conflicts
+let lastLocalMoveTime = 0;
+const SYNC_DEBOUNCE_MS = 2000; // Don't sync for 2 seconds after making a move
+
 // Include the original game.js logic here (will be loaded separately)
 </script>
 <script src="ai/LearnedAI.js?v=<?= time() ?>"></script>
@@ -614,6 +618,13 @@ if (IS_ONLINE) {
                         }, 500);
                     }
                 } else if (data.board_state && !gameOver) {
+                    // Skip sync if we just made a move (debounce period)
+                    const timeSinceLastMove = Date.now() - lastLocalMoveTime;
+                    if (timeSinceLastMove < SYNC_DEBOUNCE_MS) {
+                        console.log('Skipping sync - recently made a move');
+                        return;
+                    }
+
                     // Normal game state sync - only update if opponent made a move
                     const state = JSON.parse(data.board_state);
 
@@ -661,6 +672,8 @@ window.addEventListener('ai-reasoning', (event) => {
 
 // ===== CHAT FUNCTIONALITY =====
 let lastChatMessageId = 0;
+const displayedMessageIds = new Set(); // Track displayed messages to prevent duplicates
+let isSendingMessage = false; // Prevent double-sending
 
 function toggleChat() {
     const container = document.getElementById('chatContainer');
@@ -676,10 +689,18 @@ function toggleChat() {
 
 async function sendMessage(event) {
     event.preventDefault();
+
+    // Prevent double-sending
+    if (isSendingMessage) {
+        return;
+    }
+
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
 
     if (!message) return;
+
+    isSendingMessage = true;
 
     try {
         const response = await fetch('api/send-chat-message.php', {
@@ -701,6 +722,8 @@ async function sendMessage(event) {
         }
     } catch (error) {
         console.error('Error sending message:', error);
+    } finally {
+        isSendingMessage = false;
     }
 }
 
@@ -718,9 +741,17 @@ async function loadChatMessages() {
             }
 
             data.messages.forEach(msg => {
+                // Skip if already displayed
+                if (displayedMessageIds.has(msg.id)) {
+                    return;
+                }
+
+                displayedMessageIds.add(msg.id);
+
                 const isMe = msg.user_id == USER_ID;
                 const messageDiv = document.createElement('div');
                 messageDiv.style.marginBottom = '0.75rem';
+                messageDiv.dataset.messageId = msg.id; // Add data attribute for tracking
                 messageDiv.innerHTML = `
                     <div style="display: flex; justify-content: ${isMe ? 'flex-end' : 'flex-start'};">
                         <div style="max-width: 70%; background: ${isMe ? '#667eea' : '#e9ecef'}; color: ${isMe ? 'white' : '#212529'}; padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.9rem;">
@@ -731,7 +762,7 @@ async function loadChatMessages() {
                     </div>
                 `;
                 messagesContainer.appendChild(messageDiv);
-                lastChatMessageId = msg.id;
+                lastChatMessageId = Math.max(lastChatMessageId, msg.id);
             });
 
             // Scroll to bottom
