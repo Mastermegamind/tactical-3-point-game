@@ -1,6 +1,11 @@
 <?php
 // Database configuration and connection handler
 
+// Initialize error handler
+if (file_exists(__DIR__ . '/error_handler.php')) {
+    require_once __DIR__ . '/error_handler.php';
+}
+
 class Database {
     private static $instance = null;
     private $connection;

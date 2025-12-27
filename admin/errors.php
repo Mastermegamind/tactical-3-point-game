@@ -1,12 +1,15 @@
 <?php
 require_once 'auth_check.php';
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/ErrorLogger.php';
+
+// Only admins and super admins can view error logs
+if (!hasPermission('admin')) {
+    header('Location: index.php');
+    exit;
+}
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
-
-$logger = ErrorLogger::getInstance();
 
 // Pagination
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
@@ -16,14 +19,51 @@ $offset = ($page - 1) * $perPage;
 // Filter by type
 $filterType = isset($_GET['type']) ? $_GET['type'] : '';
 
-// Get errors
-if ($filterType) {
-    $errors = $logger->getErrorsByType($filterType, $perPage);
-    $totalErrors = count($errors);
-} else {
-    $errors = $logger->getRecentErrors($perPage, $offset);
-    $totalErrors = $logger->getErrorCount();
+// Handle clear all errors action
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'clear_all' && hasPermission('super_admin')) {
+        $conn->query("DELETE FROM error_logs");
+        logAdminActivity('clear_errors', 'Cleared all error logs');
+        header('Location: errors.php');
+        exit;
+    } elseif ($_POST['action'] === 'delete_error' && hasPermission('admin')) {
+        $errorId = (int)$_POST['error_id'];
+        $stmt = $conn->prepare("DELETE FROM error_logs WHERE id = ?");
+        $stmt->execute([$errorId]);
+        logAdminActivity('delete_error', "Deleted error log ID: $errorId");
+        header('Location: errors.php' . ($filterType ? '?type=' . urlencode($filterType) : ''));
+        exit;
+    }
 }
+
+// Build query
+$query = "SELECT * FROM error_logs";
+$countQuery = "SELECT COUNT(*) FROM error_logs";
+
+if ($filterType) {
+    $query .= " WHERE error_type = :type";
+    $countQuery .= " WHERE error_type = :type";
+}
+
+$query .= " ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+
+// Get total count
+$stmt = $conn->prepare($countQuery);
+if ($filterType) {
+    $stmt->bindValue(':type', $filterType, PDO::PARAM_STR);
+}
+$stmt->execute();
+$totalErrors = $stmt->fetchColumn();
+
+// Get errors
+$stmt = $conn->prepare($query);
+if ($filterType) {
+    $stmt->bindValue(':type', $filterType, PDO::PARAM_STR);
+}
+$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+$errors = $stmt->fetchAll();
 
 $totalPages = ceil($totalErrors / $perPage);
 
@@ -46,24 +86,41 @@ $errorTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fa;
             min-height: 100vh;
-            padding: 2rem 1rem;
         }
 
-        .admin-container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .card-custom {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 2rem;
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 0;
             margin-bottom: 2rem;
-            border: none;
+        }
+
+        .admin-nav {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
         }
 
         .error-row {
@@ -111,21 +168,52 @@ $errorTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <div class="card-custom">
+    <div class="admin-header">
+        <div class="container">
+            <h1>🐛 Error Logs & Debugging</h1>
+            <p class="mb-0">Monitor and troubleshoot system errors</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="admin-nav">
+            <ul class="nav nav-pills">
+                <li class="nav-item"><a class="nav-link" href="index.php">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="users.php">Users</a></li>
+                <li class="nav-item"><a class="nav-link" href="games.php">Games</a></li>
+                <li class="nav-item"><a class="nav-link" href="statistics.php">Statistics</a></li>
+                <li class="nav-item"><a class="nav-link" href="ai-training.php">AI Training</a></li>
+                <li class="nav-item"><a class="nav-link" href="ai-knowledge-base.php">AI Knowledge Base</a></li>
+                <?php if (hasPermission('super_admin')): ?>
+                <li class="nav-item"><a class="nav-link" href="admins.php">Admins</a></li>
+                <?php endif; ?>
+                <li class="nav-item"><a class="nav-link active" href="errors.php">Error Logs</a></li>
+            </ul>
+        </div>
+
+        <div class="content-card">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2>Error Logs</h2>
-                    <p class="text-muted mb-0">Total Errors: <?= $totalErrors ?></p>
+                    <h5>Error Logs (<?= number_format($totalErrors) ?>)</h5>
+                    <small class="text-muted">Real-time error tracking and debugging</small>
                 </div>
-                <a href="../dashboard.php" class="btn btn-outline-secondary">Back to Dashboard</a>
+                <div class="d-flex gap-2">
+                    <?php if (hasPermission('super_admin')): ?>
+                    <button class="btn btn-sm btn-danger" onclick="clearAllErrors()">
+                        🗑️ Clear All
+                    </button>
+                    <?php endif; ?>
+                    <button class="btn btn-sm btn-primary" onclick="location.reload()">
+                        🔄 Refresh
+                    </button>
+                </div>
             </div>
 
             <div class="mb-4">
-                <h6>Filter by Type:</h6>
-                <a href="admin-errors.php" class="btn btn-sm btn-outline-primary btn-filter <?= !$filterType ? 'active' : '' ?>">All</a>
+                <h6 class="mb-2">Filter by Type:</h6>
+                <a href="errors.php" class="btn btn-sm btn-outline-primary btn-filter <?= !$filterType ? 'active' : '' ?>">All</a>
                 <?php foreach ($errorTypes as $type): ?>
-                    <a href="admin-errors.php?type=<?= urlencode($type) ?>"
+                    <a href="errors.php?type=<?= urlencode($type) ?>"
                        class="btn btn-sm btn-outline-primary btn-filter <?= $filterType === $type ? 'active' : '' ?>">
                         <?= htmlspecialchars($type) ?>
                     </a>
@@ -143,24 +231,28 @@ $errorTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="error-type-badge badge-<?= htmlspecialchars($error['error_type']) ?>">
+                                        <span class="error-type-badge badge-default">
                                             <?= htmlspecialchars($error['error_type']) ?>
                                         </span>
-                                        <?php if ($error['username']): ?>
-                                            <small class="text-muted">User: <?= htmlspecialchars($error['username']) ?></small>
-                                        <?php endif; ?>
                                         <small class="text-muted">
                                             <?= date('M d, Y H:i:s', strtotime($error['created_at'])) ?>
                                         </small>
                                     </div>
                                     <div class="fw-bold"><?= htmlspecialchars($error['error_message']) ?></div>
-                                    <?php if ($error['file_path']): ?>
+                                    <?php if ($error['error_file']): ?>
                                         <small class="text-muted">
-                                            <?= htmlspecialchars($error['file_path']) ?>:<?= $error['line_number'] ?>
+                                            <?= htmlspecialchars($error['error_file']) ?>:<?= $error['error_line'] ?>
                                         </small>
                                     <?php endif; ?>
                                 </div>
-                                <span class="badge bg-secondary">▼</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <?php if (hasPermission('admin')): ?>
+                                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteError(<?= $error['id'] ?>)">
+                                        🗑️
+                                    </button>
+                                    <?php endif; ?>
+                                    <span class="badge bg-secondary">▼</span>
+                                </div>
                             </div>
                             <div id="error-details-<?= $error['id'] ?>" class="error-details" style="display: none;">
                                 <strong>Request:</strong> <?= htmlspecialchars($error['request_method'] ?? 'N/A') ?>
@@ -170,10 +262,6 @@ $errorTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                                 <?php if ($error['stack_trace']): ?>
                                     <strong>Stack Trace:</strong><br>
                                     <pre style="white-space: pre-wrap;"><?= htmlspecialchars($error['stack_trace']) ?></pre>
-                                <?php endif; ?>
-                                <?php if ($error['session_data']): ?>
-                                    <strong>Session Data:</strong><br>
-                                    <pre><?= htmlspecialchars(json_encode(json_decode($error['session_data']), JSON_PRETTY_PRINT)) ?></pre>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -207,6 +295,9 @@ $errorTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         function toggleErrorDetails(errorId) {
             const details = document.getElementById('error-details-' + errorId);
@@ -216,9 +307,47 @@ $errorTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 details.style.display = 'none';
             }
         }
-    </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        function clearAllErrors() {
+            Swal.fire({
+                title: 'Clear All Error Logs?',
+                text: 'This will permanently delete all error logs from the database. This cannot be undone!',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, clear all'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.innerHTML = '<input type="hidden" name="action" value="clear_all">';
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function deleteError(errorId) {
+            Swal.fire({
+                title: 'Delete Error?',
+                text: 'Remove this error from the log?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.innerHTML = `
+                        <input type="hidden" name="action" value="delete_error">
+                        <input type="hidden" name="error_id" value="${errorId}">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+    </script>
 </body>
 </html>
