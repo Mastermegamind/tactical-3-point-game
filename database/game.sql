@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 27, 2025 at 04:40 AM
+-- Generation Time: Dec 27, 2025 at 06:35 AM
 -- Server version: 10.11.14-MariaDB-0+deb12u2
 -- PHP Version: 8.4.16
 
@@ -45,7 +45,7 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `username`, `email`, `password`, `full_name`, `role`, `is_active`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'admin', 'admin@game.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', 'super_admin', 1, NULL, '2025-12-27 04:15:21', '2025-12-27 04:15:21');
+(1, 'super-admin', 'admin@megamindtechnologies.com', '$2y$12$l8kBztsQvw1GIomOQ..7s.3dEYUK9096X8wJgXWwYHUjowblK7akC', 'System Administrator', 'super_admin', 1, '2025-12-27 06:23:27', '2025-12-27 04:15:21', '2025-12-27 06:23:27');
 
 -- --------------------------------------------------------
 
@@ -64,6 +64,14 @@ CREATE TABLE `admin_activity_log` (
   `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `admin_activity_log`
+--
+
+INSERT INTO `admin_activity_log` (`id`, `admin_id`, `action`, `target_type`, `target_id`, `description`, `ip_address`, `created_at`) VALUES
+(1, 1, 'login', NULL, NULL, 'Admin logged in', '127.0.0.1', '2025-12-27 05:07:29'),
+(2, 1, 'login', NULL, NULL, 'Admin logged in', '127.0.0.1', '2025-12-27 06:23:27');
+
 -- --------------------------------------------------------
 
 --
@@ -81,6 +89,85 @@ CREATE TABLE `admin_sessions` (
   `is_active` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `admin_sessions`
+--
+
+INSERT INTO `admin_sessions` (`id`, `admin_id`, `session_token`, `ip_address`, `user_agent`, `login_time`, `logout_time`, `is_active`) VALUES
+(1, 1, '0d261e08dfa04ba4c82f3ffa0edf7f44271ad089c72cfe11de4be809c7c24612', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0', '2025-12-27 05:07:29', NULL, 1),
+(2, 1, 'c84dadaf372376893ded6bb0de029da35696a9a449fe65618cf157a7e50bc88d', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0', '2025-12-27 06:23:27', NULL, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ai_strategies`
+--
+
+CREATE TABLE `ai_strategies` (
+  `id` int(11) NOT NULL,
+  `strategy_name` varchar(100) NOT NULL,
+  `difficulty_level` enum('easy','medium','hard') NOT NULL DEFAULT 'medium',
+  `board_state` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Current board configuration when strategy was used' CHECK (json_valid(`board_state`)),
+  `ai_pieces_positions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Array of AI piece positions [0-8]' CHECK (json_valid(`ai_pieces_positions`)),
+  `opponent_pieces_positions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Array of opponent piece positions [0-8]' CHECK (json_valid(`opponent_pieces_positions`)),
+  `move_from` int(1) DEFAULT NULL COMMENT 'Position moved from (NULL for placement)',
+  `move_to` int(1) NOT NULL COMMENT 'Position moved to',
+  `move_type` enum('placement','movement') NOT NULL,
+  `game_phase` enum('placement','movement','endgame') NOT NULL,
+  `opponent_pattern` varchar(50) DEFAULT NULL COMMENT 'Detected opponent playing style',
+  `strategy_type` varchar(50) NOT NULL COMMENT 'e.g., offensive, defensive, counter, trap',
+  `success_count` int(11) DEFAULT 1 COMMENT 'Times this strategy led to win',
+  `failure_count` int(11) DEFAULT 0 COMMENT 'Times this strategy led to loss',
+  `success_rate` decimal(5,2) DEFAULT 0.00 COMMENT 'Win percentage for this strategy',
+  `total_uses` int(11) DEFAULT 1 COMMENT 'Total times strategy was attempted',
+  `avg_moves_to_win` decimal(5,2) DEFAULT NULL COMMENT 'Average moves when this strategy wins',
+  `board_evaluation_score` decimal(8,4) DEFAULT NULL COMMENT 'AI calculated board strength score',
+  `threat_level` tinyint(1) DEFAULT 0 COMMENT '0-10 scale of opponent threat',
+  `priority_score` int(11) DEFAULT 50 COMMENT 'AI priority for using this strategy (0-100)',
+  `notes` text DEFAULT NULL COMMENT 'AI generated notes about strategy',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `ai_strategies`
+--
+
+INSERT INTO `ai_strategies` (`id`, `strategy_name`, `difficulty_level`, `board_state`, `ai_pieces_positions`, `opponent_pieces_positions`, `move_from`, `move_to`, `move_type`, `game_phase`, `opponent_pattern`, `strategy_type`, `success_count`, `failure_count`, `success_rate`, `total_uses`, `avg_moves_to_win`, `board_evaluation_score`, `threat_level`, `priority_score`, `notes`, `created_at`, `last_used_at`, `updated_at`) VALUES
+(1, 'winning-sequence', 'hard', '[null,\"X\",\"X\",null,\"X\",null,null,null,null]', '[]', '[1,2,4]', NULL, 0, 'placement', 'placement', 'center-focused', 'offensive', 3, 0, 100.00, 3, NULL, 25.0455, 10, 78, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(2, 'defensive-block', 'hard', '[\"O\",\"X\",\"X\",null,\"X\",null,null,null,null]', '[0]', '[1,2,4]', NULL, 7, 'placement', 'placement', 'center-focused', 'defensive', 5, 0, 100.00, 5, 8.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(3, 'defensive-block', 'hard', '[\"O\",\"X\",\"X\",null,\"X\",null,null,\"O\",null]', '[0,7]', '[1,2,4]', NULL, 6, 'placement', 'placement', 'center-focused', 'defensive', 4, 0, 100.00, 4, 12.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(4, 'tactical-move', 'hard', '[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null]', '[0,6,7]', '[1,3,4]', 0, 8, 'movement', 'movement', 'center-focused', 'defensive', 5, 0, 100.00, 5, 12.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(5, 'winning-sequence', 'hard', '[null,null,null,null,\"X\",null,\"X\",\"X\",null]', '[]', '[4,6,7]', NULL, 8, 'placement', 'placement', 'center-focused', 'offensive', 1, 0, 0.00, 1, 8.00, -220.0000, 10, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(6, 'defensive-block', 'hard', '[null,null,null,null,\"X\",null,\"X\",\"X\",\"O\"]', '[8]', '[4,6,7]', NULL, 1, 'placement', 'placement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 8.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(7, 'defensive-block', 'hard', '[null,\"O\",null,null,\"X\",null,\"X\",\"X\",\"O\"]', '[1,8]', '[4,6,7]', NULL, 2, 'placement', 'placement', 'center-focused', 'defensive', 3, 0, 100.00, 3, 10.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(8, 'tactical-move', 'hard', '[\"X\",\"O\",\"O\",null,null,null,\"X\",\"X\",\"O\"]', '[1,2,8]', '[0,6,7]', 1, 5, 'movement', 'movement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 10.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(9, 'tactical-move', 'hard', '[null,null,null,null,\"X\",null,null,null,null]', '[]', '[4]', NULL, 0, 'placement', 'placement', 'center-focused', 'balanced', 8, 0, 100.00, 8, 12.00, -10.0000, 4, 67, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(10, 'tactical-move', 'hard', '[\"O\",null,null,null,\"X\",null,null,null,\"X\"]', '[0]', '[4,8]', NULL, 2, 'placement', 'placement', 'center-focused', 'balanced', 2, 0, 100.00, 2, 26.00, 10.0000, 7, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(11, 'defensive-block', 'hard', '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '[0,2,7]', '[1,4,5]', 0, 3, 'movement', 'movement', 'center-focused', 'defensive', 4, 0, 100.00, 4, 26.00, -60.0000, 6, 52, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(12, 'defensive-block', 'hard', '[null,\"X\",\"O\",\"O\",\"X\",null,null,\"O\",\"X\"]', '[2,3,7]', '[1,4,8]', 2, 0, 'movement', 'movement', 'center-focused', 'defensive', 3, 0, 100.00, 3, 12.00, -25.0000, 6, 63, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(13, 'tactical-move', 'hard', '[\"O\",\"X\",null,\"O\",null,null,\"X\",\"O\",\"X\"]', '[0,3,7]', '[1,6,8]', 0, 4, 'movement', 'movement', 'center-focused', 'balanced', 2, 0, 100.00, 2, 54.00, 0.0000, 4, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(14, 'tactical-move', 'hard', '[\"X\",\"X\",null,\"O\",\"O\",null,\"X\",\"O\",null]', '[3,4,7]', '[0,1,6]', 7, 5, 'movement', 'movement', 'center-focused', 'balanced', 3, 0, 100.00, 3, 26.00, -5.0000, 6, 69, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(15, 'tactical-move', 'hard', '[\"X\",null,null,null,null,null,null,null,null]', '[]', '[0]', NULL, 4, 'placement', 'placement', 'balanced', 'balanced', 2, 0, 100.00, 2, 26.00, 0.0000, 3, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(16, 'winning-sequence', 'hard', '[\"O\",null,null,\"X\",\"X\",null,null,null,null]', '[0]', '[3,4]', NULL, 5, 'placement', 'placement', 'center-focused', 'offensive', 3, 0, 100.00, 3, NULL, 18.2000, 6, 75, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(17, 'defensive-block', 'hard', '[\"O\",\"O\",null,null,\"X\",\"O\",\"X\",\"X\",null]', '[0,1,5]', '[4,6,7]', 5, 2, 'movement', 'movement', 'center-focused', 'defensive', 9, 0, 100.00, 9, 54.00, -60.0000, 10, 52, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(18, 'defensive-block', 'hard', '[\"O\",\"X\",null,\"X\",\"X\",null,null,\"O\",null]', '[0,7]', '[1,3,4]', NULL, 5, 'placement', 'placement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 12.00, -80.0000, 7, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(19, 'tactical-move', 'hard', '[null,\"X\",null,\"X\",\"O\",\"O\",null,\"O\",\"X\"]', '[4,5,7]', '[1,3,8]', 5, 2, 'movement', 'movement', 'center-focused', 'balanced', 4, 0, 100.00, 4, 26.00, 10.0000, 2, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(20, 'tactical-move', 'hard', '[\"O\",\"X\",null,null,\"O\",null,\"X\",\"O\",\"X\"]', '[0,4,7]', '[1,6,8]', 0, 3, 'movement', 'movement', 'center-focused', 'balanced', 10, 0, 100.00, 10, 12.00, 0.0000, 3, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(21, 'tactical-move', 'hard', '[null,\"X\",\"O\",null,\"O\",\"X\",\"X\",\"O\",null]', '[2,4,7]', '[1,5,6]', 2, 0, 'movement', 'movement', 'center-focused', 'balanced', 4, 0, 100.00, 4, 54.00, 10.0000, 1, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(22, 'winning-sequence', 'hard', '[\"O\",null,null,null,\"X\",null,\"X\",null,null]', '[0]', '[4,6]', NULL, 2, 'placement', 'placement', 'center-focused', 'offensive', 2, 0, 100.00, 2, NULL, 18.6667, 7, 76, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(23, 'tactical-move', 'hard', '[\"O\",null,\"O\",null,\"X\",\"X\",\"X\",\"O\",null]', '[0,2,7]', '[4,5,6]', 7, 1, 'movement', 'movement', 'center-focused', 'defensive', 3, 0, 100.00, 3, 12.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(24, 'winning-sequence', 'hard', '[\"O\",\"X\",null,null,\"X\",null,null,null,null]', '[0]', '[1,4]', NULL, 7, 'placement', 'placement', 'center-focused', 'offensive', 2, 0, 100.00, 2, NULL, 18.6667, 6, 76, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(25, 'defensive-block', 'hard', '[\"X\",null,null,null,\"O\",null,\"X\",null,null]', '[4]', '[0,6]', NULL, 3, 'placement', 'placement', 'corner-strategy', 'defensive', 1, 0, 0.00, 1, 26.00, -60.0000, 6, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(26, 'winning-sequence', 'hard', '[\"O\",null,null,\"X\",\"X\",\"O\",null,\"X\",null]', '[0,5]', '[3,4,7]', NULL, 1, 'placement', 'placement', 'center-focused', 'offensive', 1, 0, 0.00, 1, 12.00, -80.0000, 8, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(27, 'defensive-block', 'hard', '[\"O\",\"O\",\"X\",null,\"X\",\"O\",null,\"X\",null]', '[0,1,5]', '[2,4,7]', 0, 6, 'movement', 'movement', 'center-focused', 'defensive', 1, 0, 0.00, 1, 12.00, -80.0000, 7, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(28, 'tactical-move', 'hard', '[\"X\",null,\"X\",null,\"X\",\"O\",\"O\",null,\"O\"]', '[5,6,8]', '[0,2,4]', 5, 7, 'movement', 'movement', 'center-focused', 'defensive', 1, 0, 0.00, 1, 12.00, -25.0000, 9, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(29, 'opening-move', 'hard', '[null,null,null,null,\"O\",null,null,null,null]', '[4]', '[]', NULL, 4, 'placement', 'placement', 'unknown', 'offensive', 1, 0, 0.00, 1, NULL, 10.0000, 0, 60, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(30, 'high-value-position', 'hard', '[null,\"O\",null,null,null,null,null,null,null]', '[1]', '[]', NULL, 1, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 10.4000, 0, 60, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(31, 'high-value-position', 'hard', '[null,null,null,null,null,null,\"O\",null,null]', '[6]', '[]', NULL, 6, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 14.0000, 0, 64, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
+(32, 'high-value-position', 'hard', '[null,null,null,null,null,null,null,null,\"O\"]', '[8]', '[]', NULL, 8, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 11.0000, 0, 61, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23');
+
 -- --------------------------------------------------------
 
 --
@@ -89,11 +176,17 @@ CREATE TABLE `admin_sessions` (
 
 CREATE TABLE `ai_training_data` (
   `id` int(11) NOT NULL,
-  `session_id` int(11) NOT NULL,
+  `session_id` int(11) DEFAULT NULL,
   `game_outcome` enum('player_win','ai_win','draw') NOT NULL,
   `difficulty_level` enum('easy','medium','hard') NOT NULL,
   `total_moves` int(11) NOT NULL,
   `winning_pattern` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`winning_pattern`)),
+  `position_weights` text DEFAULT NULL,
+  `opening_patterns` text DEFAULT NULL,
+  `winning_sequences` text DEFAULT NULL,
+  `games_analyzed` int(11) DEFAULT 0,
+  `win_rate` decimal(5,2) DEFAULT 0.00,
+  `avg_moves` decimal(5,2) DEFAULT 0.00,
   `game_duration_seconds` int(11) DEFAULT NULL,
   `player_rating` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp()
@@ -103,38 +196,42 @@ CREATE TABLE `ai_training_data` (
 -- Dumping data for table `ai_training_data`
 --
 
-INSERT INTO `ai_training_data` (`id`, `session_id`, `game_outcome`, `difficulty_level`, `total_moves`, `winning_pattern`, `game_duration_seconds`, `player_rating`, `created_at`) VALUES
-(1, 1, 'player_win', 'hard', 11, NULL, -3564, 1025, '2025-12-26 11:29:41'),
-(2, 2, 'ai_win', 'hard', 12, NULL, -3558, 1015, '2025-12-26 11:54:11'),
-(3, 4, 'player_win', 'hard', 13, NULL, -3539, 1040, '2025-12-26 11:59:27'),
-(4, 5, 'player_win', 'hard', 15, NULL, -3540, 1065, '2025-12-26 12:01:44'),
-(5, 6, 'player_win', 'hard', 7, NULL, -3575, 1090, '2025-12-26 12:02:26'),
-(6, 7, 'ai_win', 'hard', 12, NULL, -3555, 1080, '2025-12-26 12:03:45'),
-(7, 8, 'ai_win', 'hard', 26, NULL, -3514, 1070, '2025-12-26 12:05:27'),
-(8, 9, 'player_win', 'hard', 13, NULL, -3562, 1095, '2025-12-26 12:06:13'),
-(9, 10, 'player_win', 'hard', 13, NULL, -3574, 1120, '2025-12-26 12:06:52'),
-(10, 11, 'player_win', 'hard', 13, NULL, -3548, 1145, '2025-12-26 12:08:15'),
-(11, 13, 'ai_win', 'hard', 8, NULL, -3550, 1135, '2025-12-26 12:20:39'),
-(12, 14, 'ai_win', 'hard', 8, NULL, -3555, 1125, '2025-12-26 12:23:30'),
-(13, 15, 'player_win', 'hard', 11, NULL, -3564, 1150, '2025-12-26 12:24:26'),
-(14, 18, 'player_win', 'hard', 11, NULL, -3562, 1175, '2025-12-26 16:50:12'),
-(15, 19, 'player_win', 'hard', 13, NULL, -3552, 1200, '2025-12-26 16:51:12'),
-(16, 20, 'player_win', 'hard', 19, NULL, -3499, 1225, '2025-12-26 17:04:43'),
-(17, 21, 'player_win', 'hard', 13, NULL, -3560, 1250, '2025-12-26 17:09:52'),
-(18, 23, 'player_win', 'easy', 5, NULL, -3592, 1025, '2025-12-26 17:17:00'),
-(19, 24, 'ai_win', 'hard', 10, NULL, -3472, 1015, '2025-12-26 17:20:32'),
-(20, 25, 'ai_win', 'hard', 54, NULL, -3397, 1005, '2025-12-26 17:24:39'),
-(21, 26, 'ai_win', 'hard', 8, NULL, -3584, 1240, '2025-12-26 17:26:02'),
-(22, 27, 'ai_win', 'medium', 6, NULL, -3568, 990, '2025-12-26 17:49:52'),
-(23, 28, 'player_win', 'easy', 5, NULL, -3592, 1025, '2025-12-26 18:58:33'),
-(24, 29, 'ai_win', 'hard', 6, NULL, -3592, 1015, '2025-12-26 18:58:53'),
-(25, 30, 'ai_win', 'hard', 14, NULL, -3543, 1005, '2025-12-26 19:00:04'),
-(26, 33, 'player_win', 'hard', 13, NULL, -3048, 1265, '2025-12-26 22:07:35'),
-(27, 34, 'ai_win', 'hard', 8, NULL, -3561, 1255, '2025-12-26 22:08:45'),
-(28, 35, 'ai_win', 'hard', 8, NULL, -3544, 1245, '2025-12-26 22:09:55'),
-(29, 36, 'player_win', 'medium', 11, NULL, -3533, 1270, '2025-12-26 22:11:13'),
-(30, 37, 'ai_win', 'medium', 8, NULL, -3568, 1260, '2025-12-26 22:12:10'),
-(31, 38, 'player_win', 'medium', 3, NULL, -3567, 1285, '2025-12-26 22:13:19');
+INSERT INTO `ai_training_data` (`id`, `session_id`, `game_outcome`, `difficulty_level`, `total_moves`, `winning_pattern`, `position_weights`, `opening_patterns`, `winning_sequences`, `games_analyzed`, `win_rate`, `avg_moves`, `game_duration_seconds`, `player_rating`, `created_at`) VALUES
+(1, 1, 'player_win', 'hard', 11, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3564, 1025, '2025-12-26 11:29:41'),
+(2, 2, 'ai_win', 'hard', 12, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3558, 1015, '2025-12-26 11:54:11'),
+(3, 4, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3539, 1040, '2025-12-26 11:59:27'),
+(4, 5, 'player_win', 'hard', 15, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3540, 1065, '2025-12-26 12:01:44'),
+(5, 6, 'player_win', 'hard', 7, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3575, 1090, '2025-12-26 12:02:26'),
+(6, 7, 'ai_win', 'hard', 12, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3555, 1080, '2025-12-26 12:03:45'),
+(7, 8, 'ai_win', 'hard', 26, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3514, 1070, '2025-12-26 12:05:27'),
+(8, 9, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3562, 1095, '2025-12-26 12:06:13'),
+(9, 10, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3574, 1120, '2025-12-26 12:06:52'),
+(10, 11, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3548, 1145, '2025-12-26 12:08:15'),
+(11, 13, 'ai_win', 'hard', 8, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3550, 1135, '2025-12-26 12:20:39'),
+(12, 14, 'ai_win', 'hard', 8, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3555, 1125, '2025-12-26 12:23:30'),
+(13, 15, 'player_win', 'hard', 11, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3564, 1150, '2025-12-26 12:24:26'),
+(14, 18, 'player_win', 'hard', 11, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3562, 1175, '2025-12-26 16:50:12'),
+(15, 19, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3552, 1200, '2025-12-26 16:51:12'),
+(16, 20, 'player_win', 'hard', 19, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3499, 1225, '2025-12-26 17:04:43'),
+(17, 21, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3560, 1250, '2025-12-26 17:09:52'),
+(18, 23, 'player_win', 'easy', 5, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3592, 1025, '2025-12-26 17:17:00'),
+(19, 24, 'ai_win', 'hard', 10, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3472, 1015, '2025-12-26 17:20:32'),
+(20, 25, 'ai_win', 'hard', 54, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3397, 1005, '2025-12-26 17:24:39'),
+(21, 26, 'ai_win', 'hard', 8, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3584, 1240, '2025-12-26 17:26:02'),
+(22, 27, 'ai_win', 'medium', 6, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3568, 990, '2025-12-26 17:49:52'),
+(23, 28, 'player_win', 'easy', 5, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3592, 1025, '2025-12-26 18:58:33'),
+(24, 29, 'ai_win', 'hard', 6, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3592, 1015, '2025-12-26 18:58:53'),
+(25, 30, 'ai_win', 'hard', 14, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3543, 1005, '2025-12-26 19:00:04'),
+(26, 33, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3048, 1265, '2025-12-26 22:07:35'),
+(27, 34, 'ai_win', 'hard', 8, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3561, 1255, '2025-12-26 22:08:45'),
+(28, 35, 'ai_win', 'hard', 8, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3544, 1245, '2025-12-26 22:09:55'),
+(29, 36, 'player_win', 'medium', 11, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3533, 1270, '2025-12-26 22:11:13'),
+(30, 37, 'ai_win', 'medium', 8, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3568, 1260, '2025-12-26 22:12:10'),
+(31, 38, 'player_win', 'medium', 3, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3567, 1285, '2025-12-26 22:13:19'),
+(33, NULL, 'ai_win', 'hard', 0, NULL, '[5.00909090909091,2.08,3.733333333333333,1.4666666666666668,1.5999999999999999,3.6399999999999997,2.8,3.733333333333333,2.2]', '[{\"positions\":[0,6,5],\"session_id\":2,\"total_moves\":12},{\"positions\":[0,5,1],\"session_id\":7,\"total_moves\":12},{\"positions\":[4,3,2],\"session_id\":8,\"total_moves\":26},{\"positions\":[0,7,6],\"session_id\":13,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":14,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":24,\"total_moves\":10},{\"positions\":[0,7,5],\"session_id\":25,\"total_moves\":54},{\"positions\":[0,5,1],\"session_id\":26,\"total_moves\":8},{\"positions\":[4,6,2],\"session_id\":29,\"total_moves\":6},{\"positions\":[0,2,7],\"session_id\":30,\"total_moves\":14},{\"positions\":[8,1,2],\"session_id\":34,\"total_moves\":8},{\"positions\":[0,7,6],\"session_id\":35,\"total_moves\":8}]', '[{\"moves\":[{\"from\":0,\"to\":1},{\"from\":1,\"to\":8},{\"from\":5,\"to\":7}],\"session_id\":2},{\"moves\":[{\"from\":0,\"to\":6},{\"from\":1,\"to\":3},{\"from\":5,\"to\":0}],\"session_id\":7},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":8,\"to\":5}],\"session_id\":8},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":7,\"to\":5}],\"session_id\":25},{\"moves\":[{\"from\":2,\"to\":0},{\"from\":0,\"to\":4},{\"from\":7,\"to\":5}],\"session_id\":30}]', 25, 48.00, 13.56, NULL, NULL, '2025-12-27 05:27:04'),
+(34, NULL, 'ai_win', 'medium', 0, NULL, '[3.3000000000000003,2.2,2.2,1,2.2,3.3000000000000003,1,1,3.3000000000000003]', '[{\"positions\":[8,4,0],\"session_id\":27,\"total_moves\":6},{\"positions\":[2,5,1],\"session_id\":37,\"total_moves\":8}]', '[]', 4, 50.00, 7.00, NULL, NULL, '2025-12-27 05:27:11'),
+(35, NULL, 'ai_win', 'easy', 0, NULL, '[1,1,1,1,1,1,1,1,1]', '[]', '[]', 2, 0.00, 5.00, NULL, NULL, '2025-12-27 05:27:14'),
+(36, NULL, 'ai_win', 'hard', 0, NULL, '[5.00909090909091,2.08,3.733333333333333,1.4666666666666668,1.5999999999999999,3.6399999999999997,2.8,3.733333333333333,2.2]', '[{\"positions\":[0,6,5],\"session_id\":2,\"total_moves\":12},{\"positions\":[0,5,1],\"session_id\":7,\"total_moves\":12},{\"positions\":[4,3,2],\"session_id\":8,\"total_moves\":26},{\"positions\":[0,7,6],\"session_id\":13,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":14,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":24,\"total_moves\":10},{\"positions\":[0,7,5],\"session_id\":25,\"total_moves\":54},{\"positions\":[0,5,1],\"session_id\":26,\"total_moves\":8},{\"positions\":[4,6,2],\"session_id\":29,\"total_moves\":6},{\"positions\":[0,2,7],\"session_id\":30,\"total_moves\":14},{\"positions\":[8,1,2],\"session_id\":34,\"total_moves\":8},{\"positions\":[0,7,6],\"session_id\":35,\"total_moves\":8}]', '[{\"moves\":[{\"from\":0,\"to\":1},{\"from\":1,\"to\":8},{\"from\":5,\"to\":7}],\"session_id\":2},{\"moves\":[{\"from\":0,\"to\":6},{\"from\":1,\"to\":3},{\"from\":5,\"to\":0}],\"session_id\":7},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":8,\"to\":5}],\"session_id\":8},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":7,\"to\":5}],\"session_id\":25},{\"moves\":[{\"from\":2,\"to\":0},{\"from\":0,\"to\":4},{\"from\":7,\"to\":5}],\"session_id\":30}]', 26, 50.00, 13.04, NULL, NULL, '2025-12-27 06:25:23');
 
 -- --------------------------------------------------------
 
@@ -788,6 +885,7 @@ CREATE TABLE `users` (
   `avatar` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `last_login` timestamp NULL DEFAULT NULL,
+  `last_activity` timestamp NULL DEFAULT NULL,
   `is_online` tinyint(1) DEFAULT 0,
   `wins` int(11) DEFAULT 0,
   `losses` int(11) DEFAULT 0,
@@ -805,12 +903,12 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `email`, `password`, `avatar`, `created_at`, `last_login`, `is_online`, `wins`, `losses`, `draws`, `rating`, `is_admin`, `is_banned`, `ban_reason`, `banned_at`, `banned_by`, `ban_expires_at`) VALUES
-(1, 'megamind', 'udechimarvellous@gmail.com', '$2y$12$Qzn78PPkoyjk5gNv2hF3zO5.h2Oa88mAI8XhQkQFqwhM17ziPjg/O', 'uploads/avatars/avatar_1_1766744222.jpg', '2025-12-26 10:16:41', '2025-12-26 16:40:09', 1, 15, 9, 0, 1285, 0, 0, NULL, NULL, NULL, NULL),
-(2, 'Sam odogwu', 'okpanyisamuel@gmail.com', '$2y$12$bP4BMZoZrK2M7SBqK4XMGen4nPWgH0DlHflePX0Y2LCKqX9el1IY6', 'avatar6.svg', '2025-12-26 17:12:15', NULL, 0, 1, 2, 0, 1005, 0, 0, NULL, NULL, NULL, NULL),
-(3, 'Never', 'garvynick895@gmail.com', '$2y$12$JuyGM65ZwdjqJbw1yngj6eNCXergqDCjuia0eUB3Jb.G86TYUCy1O', 'avatar4.svg', '2025-12-26 17:47:51', NULL, 0, 0, 1, 0, 990, 0, 0, NULL, NULL, NULL, NULL),
-(4, 'Maziscanner', 'maziscanner@gmail.com', '$2y$12$2icW18lHjwj.apVlEdtABuMbLXN0msH9SlLSu23u3XDx9ibBlktz2', 'avatar1.svg', '2025-12-26 18:57:00', NULL, 0, 1, 2, 0, 1005, 0, 0, NULL, NULL, NULL, NULL),
-(5, 'LadyMegaMind', 'chiamakacliff@gmail.com', '$2y$12$IBnTGEoTHvY1s52qVq1qouaaKvJJZ55hupSyNQ4xZ20SNc2DtHFjK', NULL, '2025-12-26 23:25:58', NULL, 0, 1, 0, 0, 1025, 0, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `users` (`id`, `username`, `email`, `password`, `avatar`, `created_at`, `last_login`, `last_activity`, `is_online`, `wins`, `losses`, `draws`, `rating`, `is_admin`, `is_banned`, `ban_reason`, `banned_at`, `banned_by`, `ban_expires_at`) VALUES
+(1, 'megamind', 'udechimarvellous@gmail.com', '$2y$12$Qzn78PPkoyjk5gNv2hF3zO5.h2Oa88mAI8XhQkQFqwhM17ziPjg/O', 'uploads/avatars/avatar_1_1766744222.jpg', '2025-12-26 10:16:41', '2025-12-27 06:24:27', '2025-12-27 06:24:27', 1, 15, 9, 0, 1285, 0, 0, NULL, NULL, NULL, NULL),
+(2, 'Sam odogwu', 'okpanyisamuel@gmail.com', '$2y$12$bP4BMZoZrK2M7SBqK4XMGen4nPWgH0DlHflePX0Y2LCKqX9el1IY6', 'avatar6.svg', '2025-12-26 17:12:15', NULL, NULL, 0, 1, 2, 0, 1005, 0, 0, NULL, NULL, NULL, NULL),
+(3, 'Never', 'garvynick895@gmail.com', '$2y$12$JuyGM65ZwdjqJbw1yngj6eNCXergqDCjuia0eUB3Jb.G86TYUCy1O', 'avatar4.svg', '2025-12-26 17:47:51', NULL, NULL, 0, 0, 1, 0, 990, 0, 0, NULL, NULL, NULL, NULL),
+(4, 'Maziscanner', 'maziscanner@gmail.com', '$2y$12$2icW18lHjwj.apVlEdtABuMbLXN0msH9SlLSu23u3XDx9ibBlktz2', 'avatar1.svg', '2025-12-26 18:57:00', NULL, NULL, 0, 1, 2, 0, 1005, 0, 0, NULL, NULL, NULL, NULL),
+(5, 'LadyMegaMind', 'chiamakacliff@gmail.com', '$2y$12$IBnTGEoTHvY1s52qVq1qouaaKvJJZ55hupSyNQ4xZ20SNc2DtHFjK', NULL, '2025-12-26 23:25:58', NULL, NULL, 0, 1, 0, 0, 1025, 0, 0, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -865,6 +963,17 @@ ALTER TABLE `admin_sessions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `admin_id` (`admin_id`),
   ADD KEY `session_token` (`session_token`);
+
+--
+-- Indexes for table `ai_strategies`
+--
+ALTER TABLE `ai_strategies`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_difficulty` (`difficulty_level`),
+  ADD KEY `idx_strategy_type` (`strategy_type`),
+  ADD KEY `idx_success_rate` (`success_rate` DESC),
+  ADD KEY `idx_priority` (`priority_score` DESC),
+  ADD KEY `idx_phase` (`game_phase`);
 
 --
 -- Indexes for table `ai_training_data`
@@ -934,19 +1043,25 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `admin_activity_log`
 --
 ALTER TABLE `admin_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `admin_sessions`
 --
 ALTER TABLE `admin_sessions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `ai_strategies`
+--
+ALTER TABLE `ai_strategies`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `ai_training_data`
 --
 ALTER TABLE `ai_training_data`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `game_moves`
