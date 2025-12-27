@@ -75,13 +75,19 @@ async function init() {
   // Initialize learned AI if playing against computer
   if (GAME_MODE && GAME_MODE.startsWith('pvc')) {
     const difficulty = GAME_MODE.split("-")[1];
-    learnedAI = new LearnedAI(difficulty);
-    aiLoaded = await learnedAI.loadStrategy();
+    if (typeof LearnedAI === 'function') {
+      learnedAI = new LearnedAI(difficulty);
+      aiLoaded = await learnedAI.loadStrategy();
 
-    if (aiLoaded) {
-      console.log(`AI using learned strategy for ${difficulty} difficulty`);
+      if (aiLoaded) {
+        console.log(`AI using learned strategy for ${difficulty} difficulty`);
+      } else {
+        console.log(`AI using standard strategy for ${difficulty} difficulty`);
+      }
     } else {
-      console.log(`AI using standard strategy for ${difficulty} difficulty`);
+      aiLoaded = false;
+      learnedAI = null;
+      console.warn('LearnedAI not available. Falling back to standard AI.');
     }
   }
 }
