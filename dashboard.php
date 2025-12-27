@@ -21,7 +21,7 @@ if ($redisManager->isEnabled()) {
 
 if (!$user) {
     $stmt = $conn->prepare("
-        SELECT username, email, avatar, wins, losses, draws, rating, created_at, last_login
+        SELECT id, username, email, avatar, wins, losses, draws, rating, created_at, last_login
         FROM users WHERE id = ?
     ");
     $stmt->execute([$_SESSION['user_id']]);
