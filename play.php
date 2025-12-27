@@ -387,6 +387,7 @@ const PLAYER_O_NAME = '<?= $playerSide === 'O' ? htmlspecialchars($currentUser['
 
 // Include the original game.js logic here (will be loaded separately)
 </script>
+<script src="ai/LearnedAI.js?v=<?= time() ?>"></script>
 <script src="game-engine.js?v=<?= time() ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

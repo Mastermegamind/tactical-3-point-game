@@ -1,23 +1,10 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/config/ErrorLogger.php';
+require_once 'auth_check.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/ErrorLogger.php';
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
-
-// Check if user is admin (you can add an is_admin column to users table)
-// For now, we'll just check if user ID is 1 (first user)
-if ($_SESSION['user_id'] != 1) {
-    header('Location: dashboard.php');
-    exit;
-}
 
 $logger = ErrorLogger::getInstance();
 
@@ -131,7 +118,7 @@ $errorTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     <h2>Error Logs</h2>
                     <p class="text-muted mb-0">Total Errors: <?= $totalErrors ?></p>
                 </div>
-                <a href="dashboard.php" class="btn btn-outline-secondary">Back to Dashboard</a>
+                <a href="../dashboard.php" class="btn btn-outline-secondary">Back to Dashboard</a>
             </div>
 
             <div class="mb-4">

@@ -37,8 +37,37 @@ try {
         exit;
     }
 
+    // Check if user is banned
+    $stmt = $conn->prepare("SELECT is_banned, ban_reason, ban_expires_at FROM users WHERE id = ?");
+    $stmt->execute([$user['id']]);
+    $banInfo = $stmt->fetch();
+
+    if ($banInfo['is_banned']) {
+        // Check if ban has expired
+        if ($banInfo['ban_expires_at'] && strtotime($banInfo['ban_expires_at']) < time()) {
+            // Ban has expired, unban the user
+            $stmt = $conn->prepare("
+                UPDATE users
+                SET is_banned = 0, ban_reason = NULL, banned_at = NULL, banned_by = NULL, ban_expires_at = NULL
+                WHERE id = ?
+            ");
+            $stmt->execute([$user['id']]);
+        } else {
+            // User is still banned
+            $banMessage = 'Your account has been banned';
+            if ($banInfo['ban_reason']) {
+                $banMessage .= ': ' . $banInfo['ban_reason'];
+            }
+            if ($banInfo['ban_expires_at']) {
+                $banMessage .= ' (Until: ' . date('M d, Y H:i', strtotime($banInfo['ban_expires_at'])) . ')';
+            }
+            echo json_encode(['success' => false, 'message' => $banMessage, 'banned' => true]);
+            exit;
+        }
+    }
+
     // Update last login and online status
-    $stmt = $conn->prepare("UPDATE users SET last_login = NOW(), is_online = TRUE WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE users SET last_login = NOW(), is_online = TRUE, last_activity = NOW() WHERE id = ?");
     $stmt->execute([$user['id']]);
 
     // Set session

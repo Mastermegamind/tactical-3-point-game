@@ -59,14 +59,31 @@ let moveNumber = 0;
 let moveStartTime = Date.now();
 let gameStartTime = Date.now();
 
+// AI Learning System
+let learnedAI = null;
+let aiLoaded = false;
+
 // Initialize game
 init();
 
-function init() {
+async function init() {
   renderPoints();
   renderMarks();
   updateUI();
-  loadGameState();
+  await loadGameState();
+
+  // Initialize learned AI if playing against computer
+  if (GAME_MODE && GAME_MODE.startsWith('pvc')) {
+    const difficulty = GAME_MODE.split("-")[1];
+    learnedAI = new LearnedAI(difficulty);
+    aiLoaded = await learnedAI.loadStrategy();
+
+    if (aiLoaded) {
+      console.log(`AI using learned strategy for ${difficulty} difficulty`);
+    } else {
+      console.log(`AI using standard strategy for ${difficulty} difficulty`);
+    }
+  }
 }
 
 async function loadGameState() {
@@ -222,23 +239,8 @@ async function handlePlacement(id) {
     return;
   }
 
-  // TWO-SESSION PLACEMENT SYSTEM
-  // Session 1: Player X places all 3 pebbles
-  // Session 2: Player O places all 3 pebbles
-  if (placedCount.X === 3 && placedCount.O === 0) {
-    // Player X finished placing all pebbles, now it's Player O's turn to place all
-    turn = "O";
-    statusText.textContent = `${PLAYER_O_NAME}'s turn to place all pebbles`;
-    renderMarks();
-    updateUI();
-    await saveGameState();
-
-    // If it's AI's turn, start AI placement
-    if (isComputerTurn()) {
-      makeComputerMove();
-    }
-    return;
-  }
+  // ALTERNATING PLACEMENT SYSTEM
+  // Players alternate placing one pebble at a time: X → O → X → O → X → O
 
   if (placedCount.X === 3 && placedCount.O === 3) {
     // Both players finished placing, move to movement phase
@@ -256,14 +258,17 @@ async function handlePlacement(id) {
     return;
   }
 
-  // During each player's placement session, don't switch turns
-  // Player continues placing until they've placed all 3
+  // Alternate turns between players after each placement
+  turn = turn === "X" ? "O" : "X";
 
   renderMarks();
   updateUI();
   await saveGameState();
 
-  makeComputerMove();
+  // If it's now the computer's turn, make AI move
+  if (isComputerTurn()) {
+    makeComputerMove();
+  }
 }
 
 async function handleMovement(clickedId) {
@@ -565,23 +570,29 @@ function computerPlacement() {
   const difficulty = GAME_MODE.split("-")[1];
   let move = -1;
 
-  if (difficulty === "hard") {
-    move = findWinningMove(COMPUTER_PLAYER);
-    if (move === -1) move = findWinningMove(turn === "X" ? "O" : "X");
-    if (move === -1 && board[4] === null) move = 4;
-    if (move === -1) move = findFirstEmpty([0, 2, 6, 8]);
-    if (move === -1) move = findFirstEmpty([1, 3, 5, 7]);
-  } else if (difficulty === "medium") {
-    if (Math.random() < 0.5) {
+  // Use learned AI if available
+  if (aiLoaded && learnedAI) {
+    move = learnedAI.getBestPlacement(board, placedCount);
+  } else {
+    // Fallback to standard AI logic
+    if (difficulty === "hard") {
       move = findWinningMove(COMPUTER_PLAYER);
       if (move === -1) move = findWinningMove(turn === "X" ? "O" : "X");
-    }
-    if (move === -1) move = getRandomEmptySpot();
-  } else {
-    if (Math.random() < 0.3 && board[4] === null) {
-      move = 4;
+      if (move === -1 && board[4] === null) move = 4;
+      if (move === -1) move = findFirstEmpty([0, 2, 6, 8]);
+      if (move === -1) move = findFirstEmpty([1, 3, 5, 7]);
+    } else if (difficulty === "medium") {
+      if (Math.random() < 0.5) {
+        move = findWinningMove(COMPUTER_PLAYER);
+        if (move === -1) move = findWinningMove(turn === "X" ? "O" : "X");
+      }
+      if (move === -1) move = getRandomEmptySpot();
     } else {
-      move = getRandomEmptySpot();
+      if (Math.random() < 0.3 && board[4] === null) {
+        move = 4;
+      } else {
+        move = getRandomEmptySpot();
+      }
     }
   }
 
@@ -594,21 +605,29 @@ function computerMovement() {
   const difficulty = GAME_MODE.split("-")[1];
   let fromTo = null;
 
-  if (difficulty === "hard") {
-    // Try to win with AI's own pieces
-    fromTo = findWinningMovementMove(COMPUTER_PLAYER);
-    // If can't win, try to block opponent by finding a blocking move
-    if (!fromTo) fromTo = findBlockingMovementMove(COMPUTER_PLAYER);
-    // Otherwise, make the best strategic move
-    if (!fromTo) fromTo = findBestMovementMove();
-  } else if (difficulty === "medium") {
-    if (Math.random() < 0.6) {
+  // Use learned AI if available
+  if (aiLoaded && learnedAI) {
+    fromTo = learnedAI.getBestMovement(board, COMPUTER_PLAYER);
+  }
+
+  // Fallback to standard AI logic if learned AI didn't return a move
+  if (!fromTo) {
+    if (difficulty === "hard") {
+      // Try to win with AI's own pieces
       fromTo = findWinningMovementMove(COMPUTER_PLAYER);
+      // If can't win, try to block opponent by finding a blocking move
       if (!fromTo) fromTo = findBlockingMovementMove(COMPUTER_PLAYER);
+      // Otherwise, make the best strategic move
+      if (!fromTo) fromTo = findBestMovementMove();
+    } else if (difficulty === "medium") {
+      if (Math.random() < 0.6) {
+        fromTo = findWinningMovementMove(COMPUTER_PLAYER);
+        if (!fromTo) fromTo = findBlockingMovementMove(COMPUTER_PLAYER);
+      }
+      if (!fromTo) fromTo = getRandomMovementMove();
+    } else {
+      fromTo = getRandomMovementMove();
     }
-    if (!fromTo) fromTo = getRandomMovementMove();
-  } else {
-    fromTo = getRandomMovementMove();
   }
 
   if (fromTo) {

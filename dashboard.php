@@ -244,6 +244,9 @@ $presetAvatars = [
                 </div>
                 <div>
                     <a href="select-avatar.php" class="btn btn-secondary-custom mb-2">Change Avatar</a>
+                    <?php if ($user['id'] == 1): ?>
+                        <a href="admin/ai-training.php" class="btn btn-secondary-custom mb-2">🤖 AI Training</a>
+                    <?php endif; ?>
                     <a href="api/logout.php" class="btn btn-secondary-custom">Logout</a>
                 </div>
             </div>

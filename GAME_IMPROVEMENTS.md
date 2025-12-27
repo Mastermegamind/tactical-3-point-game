@@ -58,71 +58,72 @@ megamind Wins!
 
 ---
 
-## 🎮 Feature 2: Two-Session Placement System
+## 🎮 Feature 2: Alternating Placement System
 
-The game now uses a **two-session placement system** where each player places all their pebbles before the other player begins.
+The game uses an **alternating placement system** where players take turns placing one pebble at a time.
 
 ### How It Works:
 
-**Before (Old System):**
-- Players alternated placing pebbles one at a time
-- X places → O places → X places → O places... etc.
+**Placement Phase:**
+- Players alternate placing pebbles one at a time
+- X places → O places → X places → O places → X places → O places
+- Each player places exactly 3 pebbles total
+- After all 6 pebbles are placed, the movement phase begins
 
-**Now (New System):**
-- **Session 1:** Player X places ALL 3 pebbles first
-- **Session 2:** Player O (AI or Player 2) places ALL 3 pebbles
-- Then the movement phase begins
+### Why This System?
 
-### Why This Improvement?
-
-1. **Strategic Planning:** Each player can plan their complete placement strategy
-2. **Clearer Turns:** No confusion about whose turn it is
-3. **Better AI Experience:** AI can analyze Player 1's complete placement before deciding
-4. **More Realistic:** Similar to traditional board games where setup happens in phases
+1. **Interactive Gameplay:** Players respond to each other's moves immediately
+2. **Dynamic Strategy:** Each placement affects the opponent's next decision
+3. **Better AI Response:** AI can react to player's placement in real-time
+4. **Traditional Gameplay:** Similar to classic turn-based board games like Tic-Tac-Toe
 
 ### Technical Implementation:
 
 **Files Modified:**
-- [game-engine.js:225-264](game-engine.js#L225-L264) - `handlePlacement()` function
+- [game-engine.js:242-271](game-engine.js#L242-L271) - `handlePlacement()` function
 
 **Key Logic Changes:**
 
 ```javascript
-// When Player X finishes placing 3 pebbles
-if (placedCount.X === 3 && placedCount.O === 0) {
-  turn = "O"; // Switch to Player O
-  statusText.textContent = "Player O's turn to place all pebbles";
-  // If AI, trigger AI placement
-  if (isComputerTurn()) {
-    makeComputerMove();
-  }
-  return;
+// ALTERNATING PLACEMENT SYSTEM
+// Players alternate placing one pebble at a time: X → O → X → O → X → O
+
+if (placedCount.X === 3 && placedCount.O === 3) {
+  // Both players finished placing, move to movement phase
+  phase = "movement";
+  turn = "X"; // Player X moves first
 }
 
-// When both players finish placing
-if (placedCount.X === 3 && placedCount.O === 3) {
-  phase = "movement"; // Start movement phase
-  turn = "X"; // Player X moves first
+// Alternate turns between players after each placement
+turn = turn === "X" ? "O" : "X";
+
+// If it's now the computer's turn, make AI move
+if (isComputerTurn()) {
+  makeComputerMove();
 }
 ```
 
 **UI Updates:**
-- [game-engine.js:514-519](game-engine.js#L514-L519) - Status text shows current player's placement progress
-- Display format: `"Player Name: Place your pebbles (2/3 placed)"`
+- Status text shows whose turn it is
+- Display format: `"Player Name's turn"` during placement
+- Move counter shows placement progress
 
 ### User Experience:
 
 **For Player vs AI:**
-1. You (Player X) place your 3 pebbles strategically
-2. Status shows: "megamind: Place your pebbles (1/3 placed)"
-3. After you place all 3, message: "AI's turn to place all pebbles"
-4. AI places all 3 pebbles automatically
-5. Movement phase begins
+1. You (Player X) place pebble #1
+2. AI (Player O) places pebble #1 immediately
+3. You (Player X) place pebble #2
+4. AI (Player O) places pebble #2 immediately
+5. You (Player X) place pebble #3
+6. AI (Player O) places pebble #3 immediately
+7. Movement phase begins with your turn
 
 **For Player vs Player:**
-1. Player 1 (X) places all 3 pebbles
-2. Player 2 (O) places all 3 pebbles
-3. Movement phase begins with Player 1's turn
+1. Player 1 (X) places pebble #1
+2. Player 2 (O) places pebble #1
+3. Alternates until both have placed 3 pebbles each
+4. Movement phase begins with Player 1's turn
 
 ---
 

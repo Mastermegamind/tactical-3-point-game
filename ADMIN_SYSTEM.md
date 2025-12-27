@@ -1,0 +1,628 @@
+# Admin System Documentation
+
+Complete admin panel with authentication, user management, statistics, and CRUD operations.
+
+---
+
+## 🎯 Overview
+
+The admin system provides a complete administrative interface for managing the Tactical Pebble Game with:
+
+- **Secure Authentication** - Separate admin login with session management
+- **Role-Based Access Control** - Three roles: Moderator, Admin, Super Admin
+- **User Management** - Full CRUD operations on game users
+- **Game Management** - View and filter all game sessions
+- **Statistics Dashboard** - Comprehensive analytics and charts
+- **AI Training** - Control and monitor AI learning system
+- **Error Logging** - View and manage system errors
+- **Activity Logging** - Track all admin actions
+- **Admin Management** - Super admins can manage other admins
+
+---
+
+## 📁 File Structure
+
+### Core Files
+
+| File | Purpose |
+|------|---------|
+| [admin/login.php](admin/login.php) | Admin login page |
+| [admin/logout.php](admin/logout.php) | Logout and session cleanup |
+| [admin/auth_check.php](admin/auth_check.php) | Authentication middleware for all admin pages |
+| [admin/index.php](admin/index.php) | Main admin dashboard |
+
+### Management Pages
+
+| File | Purpose | Required Permission |
+|------|---------|-------------------|
+| [admin/users.php](admin/users.php) | User CRUD operations | Admin |
+| [admin/games.php](admin/games.php) | Game management and filtering | Moderator |
+| [admin/statistics.php](admin/statistics.php) | Comprehensive statistics | Moderator |
+| [admin/ai-training.php](admin/ai-training.php) | AI training dashboard | Admin |
+| [admin/errors.php](admin/errors.php) | Error log viewer | Admin |
+| [admin/admins.php](admin/admins.php) | Admin management | Super Admin |
+
+### Database Migration
+
+| File | Purpose |
+|------|---------|
+| [database/admin-tables.sql](database/admin-tables.sql) | Creates admin tables |
+
+---
+
+## 🗄️ Database Schema
+
+### admins Table
+
+Stores administrator accounts:
+
+```sql
+CREATE TABLE `admins` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL UNIQUE,
+  `email` varchar(100) NOT NULL UNIQUE,
+  `password` varchar(255) NOT NULL,
+  `full_name` varchar(100) DEFAULT NULL,
+  `role` enum('super_admin','admin','moderator') DEFAULT 'admin',
+  `is_active` tinyint(1) DEFAULT 1,
+  `last_login` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+);
+```
+
+### admin_sessions Table
+
+Tracks admin login sessions:
+
+```sql
+CREATE TABLE `admin_sessions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `admin_id` int(11) NOT NULL,
+  `session_token` varchar(255) NOT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `login_time` timestamp NULL DEFAULT current_timestamp(),
+  `logout_time` timestamp NULL DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE
+);
+```
+
+### admin_activity_log Table
+
+Audit trail of all admin actions:
+
+```sql
+CREATE TABLE `admin_activity_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `admin_id` int(11) NOT NULL,
+  `action` varchar(100) NOT NULL,
+  `target_type` varchar(50) DEFAULT NULL,
+  `target_id` int(11) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE
+);
+```
+
+---
+
+## 🚀 Installation
+
+### Step 1: Run Database Migration
+
+```bash
+mysql -u root -proot game < database/admin-tables.sql
+```
+
+This creates:
+- `admins` table
+- `admin_sessions` table
+- `admin_activity_log` table
+- Adds `is_admin` column to `users` table
+- Creates default super admin account
+
+### Step 2: Default Admin Credentials
+
+```
+Username: admin
+Password: admin123
+Role: super_admin
+```
+
+**⚠️ IMPORTANT:** Change the default password immediately after first login!
+
+### Step 3: Access Admin Panel
+
+Navigate to: `/admin/login.php`
+
+---
+
+## 👥 Role-Based Permissions
+
+### Role Hierarchy
+
+1. **Super Admin** - Full access to everything
+   - Can manage other admins
+   - Can create/delete/modify admin accounts
+   - All admin permissions
+
+2. **Admin** - Full access except admin management
+   - Can manage users (create, edit, delete)
+   - Can train AI
+   - Can view error logs
+   - Can view all statistics
+
+3. **Moderator** - Read-only access
+   - Can view users (no edit/delete)
+   - Can view games
+   - Can view statistics
+   - Limited access to other features
+
+### Permission Check Function
+
+```php
+// In admin pages:
+if (hasPermission('super_admin')) {
+    // Super admin only code
+}
+
+if (hasPermission('admin')) {
+    // Admin and super_admin can access
+}
+
+if (hasPermission('moderator')) {
+    // All roles can access
+}
+```
+
+---
+
+## 📊 Features
+
+### 1. Dashboard (admin/index.php)
+
+**Statistics Cards:**
+- Total Users
+- Active Users (online now)
+- Total Games
+- Games Today
+- Completed Games
+- Average Rating
+- AI Training Data Count
+- Completion Rate
+
+**Recent Activity:**
+- Recent user logins
+- Recent games played
+- Admin activity log
+
+**Access:** All roles
+
+---
+
+### 2. User Management (admin/users.php)
+
+**Features:**
+- View all users with pagination
+- Search users by username/email
+- Edit user stats (rating, wins, losses, draws)
+- Reset user passwords
+- Delete users
+- View online status
+- View last activity
+
+**Actions:**
+- **Edit:** Modify user stats
+- **Reset Password:** Sets password to `password123`
+- **Delete:** Permanently removes user (admin only)
+
+**Access:** Admin, Super Admin
+
+---
+
+### 3. Game Management (admin/games.php)
+
+**Features:**
+- View all game sessions
+- Filter by status (active/completed)
+- Filter by mode (pvp, pvc-easy, etc.)
+- See game duration
+- View winners
+- Pagination
+
+**Access:** All roles
+
+---
+
+### 4. Statistics (admin/statistics.php)
+
+**Comprehensive Analytics:**
+- User growth (week/month)
+- Games per day (7-day chart)
+- Games by mode (pie chart)
+- AI performance by difficulty
+- Top 10 players by rating
+- Average game duration
+- Win rates and completion rates
+
+**Charts:**
+- Games Per Day (Line Chart)
+- Games by Mode (Doughnut Chart)
+
+**Access:** All roles
+
+---
+
+### 5. AI Training (admin/ai-training.php)
+
+**Features:**
+- View AI statistics for all difficulties
+- Train AI with one click
+- View training results
+- Monitor AI performance
+- See last training timestamp
+
+**Access:** Admin, Super Admin
+
+---
+
+### 6. Error Logs (admin/errors.php)
+
+**Features:**
+- View all system errors
+- Filter by error type
+- View stack traces
+- See request context
+- Pagination
+
+**Access:** Admin, Super Admin
+
+---
+
+### 7. Admin Management (admin/admins.php)
+
+**Features:**
+- Create new admins
+- View all admin accounts
+- Activate/deactivate admins
+- Delete admins
+- View last login times
+- Assign roles
+
+**Access:** Super Admin only
+
+---
+
+## 🔐 Security Features
+
+### Authentication
+
+- **Session-based authentication**
+- **Password hashing** with PHP's `password_hash()`
+- **Session validation** on every page load
+- **Auto-logout** for inactive/deleted admins
+- **IP address logging** for all sessions
+- **User agent tracking**
+
+### Activity Logging
+
+Every admin action is logged with:
+- Admin ID
+- Action type
+- Description
+- Target type/ID
+- IP address
+- Timestamp
+
+### Password Security
+
+- Minimum requirements enforced
+- Bcrypt hashing (PASSWORD_DEFAULT)
+- Reset password functionality
+- Change password on first login recommended
+
+---
+
+## 🛠️ Usage Guide
+
+### For Super Admins
+
+#### Create New Admin
+
+1. Go to "Manage Admins"
+2. Fill in the form:
+   - Username (unique)
+   - Email (unique)
+   - Full Name
+   - Password
+   - Role
+3. Click "Create Admin"
+
+#### Manage Admins
+
+- **Deactivate:** Prevents login without deleting account
+- **Activate:** Re-enables deactivated account
+- **Delete:** Permanently removes admin
+
+### For Admins
+
+#### Manage Users
+
+1. Go to "Users"
+2. Search or browse users
+3. Click "Edit" to modify stats
+4. Click "Reset PW" to reset password to `password123`
+5. Click "Delete" to remove user
+
+#### Train AI
+
+1. Go to "AI Training"
+2. Select difficulty level
+3. Click "Train AI"
+4. Wait for training to complete
+5. Review results in modal
+
+### For All Roles
+
+#### View Statistics
+
+1. Go to "Statistics"
+2. View overall metrics
+3. Analyze charts
+4. Check top players
+5. Monitor AI performance
+
+---
+
+## 📝 Activity Log Examples
+
+```sql
+-- View all admin actions
+SELECT * FROM admin_activity_log ORDER BY created_at DESC;
+
+-- View specific admin's actions
+SELECT * FROM admin_activity_log WHERE admin_id = 1;
+
+-- View login/logout activity
+SELECT * FROM admin_activity_log WHERE action IN ('login', 'logout');
+
+-- View user modifications
+SELECT * FROM admin_activity_log WHERE target_type = 'user';
+```
+
+---
+
+## 🔧 Customization
+
+### Adding New Admin Page
+
+1. Create new PHP file in `/admin` directory
+2. Add authentication:
+
+```php
+<?php
+require_once 'auth_check.php';
+
+// Your page code here
+?>
+```
+
+3. Add to navigation in other admin pages
+4. Log activities:
+
+```php
+logAdminActivity('action_name', 'Description', 'target_type', $targetId);
+```
+
+### Adding Permission Level
+
+```php
+// In auth_check.php, modify hasPermission()
+function hasPermission($requiredRole = 'admin') {
+    $roles = [
+        'viewer' => 1,      // New role
+        'moderator' => 2,
+        'admin' => 3,
+        'super_admin' => 4
+    ];
+    // ...
+}
+```
+
+### Custom Activity Log
+
+```php
+logAdminActivity(
+    'custom_action',              // Action name
+    'Did something important',    // Description
+    'custom_type',                // Target type
+    $id                           // Target ID
+);
+```
+
+---
+
+## 📈 Statistics Available
+
+### User Statistics
+- Total users
+- New users (week/month)
+- Active users
+- Average rating
+- Top players
+
+### Game Statistics
+- Total games
+- Games today
+- Games per day (7 days)
+- Games by mode
+- Completion rate
+- Average duration
+
+### AI Performance
+- Games by difficulty
+- Win/loss/draw counts
+- Win rates
+- Average moves
+- Average duration
+
+---
+
+## 🐛 Troubleshooting
+
+### Cannot Login
+
+**Check:**
+1. Verify admin exists in database: `SELECT * FROM admins WHERE username = 'admin'`
+2. Check `is_active = 1`
+3. Verify password is hashed
+4. Check session configuration
+
+### Permission Denied
+
+**Check:**
+1. Verify admin role: `SELECT role FROM admins WHERE id = X`
+2. Check `hasPermission()` call in page
+3. Verify session variables set
+
+### Activity Log Not Recording
+
+**Check:**
+1. `admin_activity_log` table exists
+2. Foreign key constraints valid
+3. `logAdminActivity()` function called correctly
+
+---
+
+## 🔄 Maintenance
+
+### Clean Old Sessions
+
+```sql
+-- Remove inactive sessions older than 30 days
+DELETE FROM admin_sessions
+WHERE is_active = 0
+AND logout_time < DATE_SUB(NOW(), INTERVAL 30 DAY);
+```
+
+### Archive Activity Logs
+
+```sql
+-- Create archive table
+CREATE TABLE admin_activity_log_archive LIKE admin_activity_log;
+
+-- Move old logs
+INSERT INTO admin_activity_log_archive
+SELECT * FROM admin_activity_log
+WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
+
+DELETE FROM admin_activity_log
+WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
+```
+
+### Rotate Error Logs
+
+Errors are stored in `error_logs` table. Clean periodically to maintain performance.
+
+---
+
+## 🎨 UI Components
+
+### Navigation
+
+All admin pages include consistent navigation:
+- Dashboard
+- Users
+- Games
+- Statistics
+- AI Training
+- Manage Admins (Super Admin only)
+- Error Logs
+
+### Styling
+
+- **Bootstrap 5.3** for UI components
+- **Chart.js** for statistics charts
+- **SweetAlert2** for modals and alerts
+- **Inter font** for typography
+- **Gradient header** with purple theme
+
+---
+
+## 📚 API Integration
+
+### Admin APIs
+
+Admin functionality can be extended with APIs:
+
+```php
+// Example: Get admin stats via API
+// File: admin/api/stats.php
+<?php
+require_once '../auth_check.php';
+header('Content-Type: application/json');
+
+$stats = [
+    'total_users' => ...,
+    'total_games' => ...,
+    // etc.
+];
+
+echo json_encode($stats);
+```
+
+---
+
+## ✅ Security Checklist
+
+- [ ] Changed default admin password
+- [ ] Created additional admin accounts
+- [ ] Tested role permissions
+- [ ] Reviewed activity logs
+- [ ] Set up log rotation
+- [ ] Configured session timeout
+- [ ] Enabled HTTPS in production
+- [ ] Restricted /admin directory (htaccess)
+- [ ] Implemented rate limiting on login
+- [ ] Set up backup for admin database
+
+---
+
+## 🎯 Quick Reference
+
+### Default Credentials
+```
+Username: admin
+Password: admin123
+URL: /admin/login.php
+```
+
+### Permission Levels
+```
+Moderator < Admin < Super Admin
+```
+
+### Key Functions
+```php
+hasPermission('role')       // Check permission
+logAdminActivity(...)       // Log action
+```
+
+### Database Tables
+```
+admins
+admin_sessions
+admin_activity_log
+```
+
+---
+
+**Version:** 1.0
+**Date:** December 27, 2025
+**Status:** ✅ Production Ready
