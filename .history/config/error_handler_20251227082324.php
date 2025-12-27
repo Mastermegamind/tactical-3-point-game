@@ -4,11 +4,9 @@
  * Catches all PHP errors, exceptions, and logs them to database and file
  */
 
-// Prevent multiple declarations
-if (class_exists('ErrorHandler', false)) {
-    return;
-}
+require_once __DIR__ . '/database.php';
 
+if (!class_exists('ErrorHandler', false)) {
 class ErrorHandler {
     private static $db;
     private static $displayErrors = true;
@@ -36,25 +34,13 @@ class ErrorHandler {
         set_exception_handler([self::class, 'handleException']);
         register_shutdown_function([self::class, 'handleFatalError']);
 
-        // Initialize database connection LAZILY (only when needed)
-        // This prevents circular dependency with database.php
-    }
-
-    /**
-     * Get database connection (lazy loading)
-     */
-    private static function getDb() {
-        if (self::$db === null) {
-            try {
-                // Only require database.php when we actually need it
-                require_once __DIR__ . '/database.php';
-                self::$db = Database::getInstance()->getConnection();
-            } catch (Exception $e) {
-                // If database fails, only log to file
-                error_log("Failed to connect to database for error logging: " . $e->getMessage());
-            }
+        // Initialize database connection
+        try {
+            self::$db = Database::getInstance()->getConnection();
+        } catch (Exception $e) {
+            // If database fails, only log to file
+            error_log("Failed to connect to database for error logging: " . $e->getMessage());
         }
-        return self::$db;
     }
 
     /**
@@ -156,11 +142,10 @@ class ErrorHandler {
 
         error_log($logMessage, 3, $logDir . '/error.log');
 
-        // Log to database (using lazy loading)
-        $db = self::getDb();
-        if ($db) {
+        // Log to database
+        if (self::$db) {
             try {
-                $stmt = $db->prepare("
+                $stmt = self::$db->prepare("
                     INSERT INTO error_logs (
                         error_type, error_message, error_file, error_line,
                         stack_trace, request_uri, request_method, user_agent, ip_address
@@ -356,5 +341,9 @@ HTML;
     }
 }
 
+}
+
 // Initialize error handler
-ErrorHandler::init();
+if (class_exists('ErrorHandler', false)) {
+    ErrorHandler::init();
+}
