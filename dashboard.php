@@ -48,6 +48,94 @@ $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
 $totalCompletedGames = $stmt->fetch()['total'];
 $totalPages = ceil($totalCompletedGames / $perPage);
 
+// Get challenges - incoming (received)
+$stmt = $conn->prepare("
+    SELECT gc.*, u.username as challenger_name, u.avatar as challenger_avatar, u.is_online as challenger_online
+    FROM game_challenges gc
+    JOIN users u ON gc.challenger_id = u.id
+    WHERE gc.challenged_id = ? AND gc.status = 'pending' AND gc.expires_at > NOW()
+    ORDER BY gc.created_at DESC
+");
+$stmt->execute([$_SESSION['user_id']]);
+$incomingChallenges = $stmt->fetchAll();
+
+// Get challenges - outgoing (sent)
+$stmt = $conn->prepare("
+    SELECT gc.*, u.username as challenged_name, u.avatar as challenged_avatar, u.is_online as challenged_online
+    FROM game_challenges gc
+    JOIN users u ON gc.challenged_id = u.id
+    WHERE gc.challenger_id = ? AND gc.status = 'pending' AND gc.expires_at > NOW()
+    ORDER BY gc.created_at DESC
+");
+$stmt->execute([$_SESSION['user_id']]);
+$outgoingChallenges = $stmt->fetchAll();
+
+// Get accepted challenges
+$stmt = $conn->prepare("
+    SELECT gc.*,
+           u1.username as challenger_name, u1.avatar as challenger_avatar,
+           u2.username as challenged_name, u2.avatar as challenged_avatar,
+           gs.status as game_status
+    FROM game_challenges gc
+    JOIN users u1 ON gc.challenger_id = u1.id
+    JOIN users u2 ON gc.challenged_id = u2.id
+    LEFT JOIN game_sessions gs ON gc.session_id = gs.id
+    WHERE (gc.challenger_id = ? OR gc.challenged_id = ?)
+    AND gc.status = 'accepted'
+    ORDER BY gc.created_at DESC
+    LIMIT 10
+");
+$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+$acceptedChallenges = $stmt->fetchAll();
+
+// Get rejected challenges
+$stmt = $conn->prepare("
+    SELECT gc.*,
+           u1.username as challenger_name, u1.avatar as challenger_avatar,
+           u2.username as challenged_name, u2.avatar as challenged_avatar
+    FROM game_challenges gc
+    JOIN users u1 ON gc.challenger_id = u1.id
+    JOIN users u2 ON gc.challenged_id = u2.id
+    WHERE (gc.challenger_id = ? OR gc.challenged_id = ?)
+    AND gc.status = 'rejected'
+    ORDER BY gc.created_at DESC
+    LIMIT 10
+");
+$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+$rejectedChallenges = $stmt->fetchAll();
+
+// Get cancelled challenges
+$stmt = $conn->prepare("
+    SELECT gc.*,
+           u1.username as challenger_name, u1.avatar as challenger_avatar,
+           u2.username as challenged_name, u2.avatar as challenged_avatar
+    FROM game_challenges gc
+    JOIN users u1 ON gc.challenger_id = u1.id
+    JOIN users u2 ON gc.challenged_id = u2.id
+    WHERE (gc.challenger_id = ? OR gc.challenged_id = ?)
+    AND gc.status = 'cancelled'
+    ORDER BY gc.created_at DESC
+    LIMIT 10
+");
+$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+$cancelledChallenges = $stmt->fetchAll();
+
+// Get expired challenges
+$stmt = $conn->prepare("
+    SELECT gc.*,
+           u1.username as challenger_name, u1.avatar as challenger_avatar,
+           u2.username as challenged_name, u2.avatar as challenged_avatar
+    FROM game_challenges gc
+    JOIN users u1 ON gc.challenger_id = u1.id
+    JOIN users u2 ON gc.challenged_id = u2.id
+    WHERE (gc.challenger_id = ? OR gc.challenged_id = ?)
+    AND (gc.status = 'pending' AND gc.expires_at <= NOW())
+    ORDER BY gc.created_at DESC
+    LIMIT 5
+");
+$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+$expiredChallenges = $stmt->fetchAll();
+
 // Get active/paused games
 $stmt = $conn->prepare("
     SELECT gs.*,
@@ -490,6 +578,284 @@ $presetAvatars = [
         </div>
         <?php endif; ?>
 
+        <!-- Challenge Management Box -->
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">🎯 Challenges</h4>
+                <span class="badge bg-primary"><?= count($incomingChallenges) ?> Incoming</span>
+            </div>
+
+            <!-- Challenge Tabs -->
+            <ul class="nav nav-tabs mb-3" id="challengeTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="incoming-tab" data-bs-toggle="tab" data-bs-target="#incoming" type="button" role="tab">
+                        Incoming <?php if(count($incomingChallenges) > 0): ?><span class="badge bg-danger ms-1"><?= count($incomingChallenges) ?></span><?php endif; ?>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab">
+                        Sent <?php if(count($outgoingChallenges) > 0): ?><span class="badge bg-warning ms-1"><?= count($outgoingChallenges) ?></span><?php endif; ?>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="accepted-tab" data-bs-toggle="tab" data-bs-target="#accepted" type="button" role="tab">
+                        Accepted <?php if(count($acceptedChallenges) > 0): ?><span class="badge bg-success ms-1"><?= count($acceptedChallenges) ?></span><?php endif; ?>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+                        Rejected
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button" role="tab">
+                        Cancelled
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="expired-tab" data-bs-toggle="tab" data-bs-target="#expired" type="button" role="tab">
+                        Expired
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="challengeTabContent">
+                <!-- Incoming Challenges -->
+                <div class="tab-pane fade show active" id="incoming" role="tabpanel">
+                    <?php if (empty($incomingChallenges)): ?>
+                        <p class="text-muted text-center py-4">No pending challenges</p>
+                    <?php else: ?>
+                        <?php foreach ($incomingChallenges as $challenge): ?>
+                            <?php
+                                $timeRemaining = strtotime($challenge['expires_at']) - time();
+                                $minutesRemaining = floor($timeRemaining / 60);
+                            ?>
+                            <div class="challenge-item mb-3 p-3 border rounded">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="position-relative">
+                                                <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid #667eea;">
+                                                    <?php
+                                                    if (isset($presetAvatars[$challenge['challenger_avatar']])) {
+                                                        echo $presetAvatars[$challenge['challenger_avatar']];
+                                                    } else {
+                                                        echo '<div style="width:100%;height:100%;background:#ccc;"></div>';
+                                                    }
+                                                    ?>
+                                                </div>
+                                                <?php if ($challenge['challenger_online']): ?>
+                                                    <span style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #28a745; border: 2px solid white; border-radius: 50%;"></span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div>
+                                                <strong><?= htmlspecialchars($challenge['challenger_name']) ?></strong>
+                                                <div class="text-muted small">
+                                                    Mode: <?= htmlspecialchars($challenge['game_mode']) ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-<?= $minutesRemaining < 2 ? 'danger' : 'muted' ?>">
+                                            ⏱️ <?= $minutesRemaining ?>m remaining
+                                        </small>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <button class="btn btn-sm btn-success me-1" onclick="respondToChallenge(<?= $challenge['id'] ?>, true)">
+                                            Accept
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="respondToChallenge(<?= $challenge['id'] ?>, false)">
+                                            Decline
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Sent Challenges -->
+                <div class="tab-pane fade" id="sent" role="tabpanel">
+                    <?php if (empty($outgoingChallenges)): ?>
+                        <p class="text-muted text-center py-4">No pending outgoing challenges</p>
+                    <?php else: ?>
+                        <?php foreach ($outgoingChallenges as $challenge): ?>
+                            <?php
+                                $timeRemaining = strtotime($challenge['expires_at']) - time();
+                                $minutesRemaining = floor($timeRemaining / 60);
+                            ?>
+                            <div class="challenge-item mb-3 p-3 border rounded bg-light">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="position-relative">
+                                                <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid #667eea;">
+                                                    <?php
+                                                    if (isset($presetAvatars[$challenge['challenged_avatar']])) {
+                                                        echo $presetAvatars[$challenge['challenged_avatar']];
+                                                    } else {
+                                                        echo '<div style="width:100%;height:100%;background:#ccc;"></div>';
+                                                    }
+                                                    ?>
+                                                </div>
+                                                <?php if ($challenge['challenged_online']): ?>
+                                                    <span style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #28a745; border: 2px solid white; border-radius: 50%;"></span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div>
+                                                <strong><?= htmlspecialchars($challenge['challenged_name']) ?></strong>
+                                                <div class="text-muted small">
+                                                    Mode: <?= htmlspecialchars($challenge['game_mode']) ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">
+                                            ⏱️ Expires in <?= $minutesRemaining ?>m
+                                        </small>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="cancelChallenge(<?= $challenge['id'] ?>)">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Accepted Challenges -->
+                <div class="tab-pane fade" id="accepted" role="tabpanel">
+                    <?php if (empty($acceptedChallenges)): ?>
+                        <p class="text-muted text-center py-4">No accepted challenges</p>
+                    <?php else: ?>
+                        <?php foreach ($acceptedChallenges as $challenge): ?>
+                            <div class="challenge-item mb-3 p-3 border rounded bg-success bg-opacity-10">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <strong><?= htmlspecialchars($challenge['challenger_name']) ?></strong>
+                                        <span class="text-muted">vs</span>
+                                        <strong><?= htmlspecialchars($challenge['challenged_name']) ?></strong>
+                                        <div class="text-muted small">
+                                            <?= htmlspecialchars($challenge['game_mode']) ?> • Accepted <?= date('M j, g:i A', strtotime($challenge['responded_at'])) ?>
+                                        </div>
+                                        <div class="mt-1">
+                                            <span class="badge bg-info text-dark">Session ID: <?= $challenge['session_id'] ?? 'N/A' ?></span>
+                                            <?php if (isset($challenge['game_status'])): ?>
+                                                <span class="badge bg-secondary"><?= ucfirst($challenge['game_status']) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <?php if ($challenge['session_id'] && isset($challenge['game_status']) && $challenge['game_status'] === 'active'): ?>
+                                            <a href="play.php?session=<?= $challenge['session_id'] ?>" class="btn btn-sm btn-primary">
+                                                Continue Game
+                                            </a>
+                                        <?php elseif ($challenge['session_id']): ?>
+                                            <span class="text-muted small">Game <?= $challenge['game_status'] ?? 'ended' ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Rejected Challenges -->
+                <div class="tab-pane fade" id="rejected" role="tabpanel">
+                    <?php if (empty($rejectedChallenges)): ?>
+                        <p class="text-muted text-center py-4">No rejected challenges</p>
+                    <?php else: ?>
+                        <?php foreach ($rejectedChallenges as $challenge): ?>
+                            <div class="challenge-item mb-3 p-3 border rounded bg-danger bg-opacity-10">
+                                <div class="row align-items-center">
+                                    <div class="col-md-9">
+                                        <strong><?= htmlspecialchars($challenge['challenger_name']) ?></strong>
+                                        <span class="text-muted">vs</span>
+                                        <strong><?= htmlspecialchars($challenge['challenged_name']) ?></strong>
+                                        <div class="text-muted small">
+                                            <?= htmlspecialchars($challenge['game_mode']) ?> • Rejected <?= date('M j, g:i A', strtotime($challenge['responded_at'])) ?>
+                                        </div>
+                                        <?php if ($challenge['session_id']): ?>
+                                            <div class="mt-1">
+                                                <span class="badge bg-info text-dark">Session ID: <?= $challenge['session_id'] ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <span class="badge bg-danger">Rejected</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Cancelled Challenges -->
+                <div class="tab-pane fade" id="cancelled" role="tabpanel">
+                    <?php if (empty($cancelledChallenges)): ?>
+                        <p class="text-muted text-center py-4">No cancelled challenges</p>
+                    <?php else: ?>
+                        <?php foreach ($cancelledChallenges as $challenge): ?>
+                            <div class="challenge-item mb-3 p-3 border rounded bg-warning bg-opacity-10">
+                                <div class="row align-items-center">
+                                    <div class="col-md-9">
+                                        <strong><?= htmlspecialchars($challenge['challenger_name']) ?></strong>
+                                        <span class="text-muted">vs</span>
+                                        <strong><?= htmlspecialchars($challenge['challenged_name']) ?></strong>
+                                        <div class="text-muted small">
+                                            <?= htmlspecialchars($challenge['game_mode']) ?> • Cancelled <?= date('M j, g:i A', strtotime($challenge['responded_at'])) ?>
+                                        </div>
+                                        <?php if ($challenge['session_id']): ?>
+                                            <div class="mt-1">
+                                                <span class="badge bg-info text-dark">Session ID: <?= $challenge['session_id'] ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <span class="badge bg-warning text-dark">Cancelled</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Expired Challenges -->
+                <div class="tab-pane fade" id="expired" role="tabpanel">
+                    <?php if (empty($expiredChallenges)): ?>
+                        <p class="text-muted text-center py-4">No expired challenges</p>
+                    <?php else: ?>
+                        <?php foreach ($expiredChallenges as $challenge): ?>
+                            <div class="challenge-item mb-3 p-3 border rounded opacity-50">
+                                <div class="row align-items-center">
+                                    <div class="col-md-9">
+                                        <strong><?= htmlspecialchars($challenge['challenger_name']) ?></strong>
+                                        <span class="text-muted">vs</span>
+                                        <strong><?= htmlspecialchars($challenge['challenged_name']) ?></strong>
+                                        <div class="text-muted small">
+                                            <?= htmlspecialchars($challenge['game_mode']) ?> • Expired <?= date('M j, g:i A', strtotime($challenge['expires_at'])) ?>
+                                        </div>
+                                        <?php if ($challenge['session_id']): ?>
+                                            <div class="mt-1">
+                                                <span class="badge bg-info text-dark">Session ID: <?= $challenge['session_id'] ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <span class="badge bg-secondary">Expired</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
         <div class="card-custom">
             <h4 class="mb-4">Recent Games</h4>
             <?php if (empty($recentGames)): ?>
@@ -607,6 +973,122 @@ $presetAvatars = [
                 }
             }
         }
+
+        // Challenge Management Functions
+        async function respondToChallenge(challengeId, accept) {
+            try {
+                const response = await fetch('api/respond-challenge.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        challenge_id: challengeId,
+                        accept: accept
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (accept && data.session_id) {
+                        await Swal.fire({
+                            title: 'Challenge Accepted!',
+                            text: 'Starting game...',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        window.location.href = `play.php?session=${data.session_id}`;
+                    } else {
+                        await Swal.fire({
+                            title: accept ? 'Challenge Accepted!' : 'Challenge Declined',
+                            icon: 'success',
+                            confirmButtonColor: '#667eea'
+                        });
+                        location.reload();
+                    }
+                } else {
+                    await Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'Failed to respond to challenge',
+                        icon: 'error',
+                        confirmButtonColor: '#667eea'
+                    });
+                }
+            } catch (error) {
+                console.error('Error responding to challenge:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to respond to challenge. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#667eea'
+                });
+            }
+        }
+
+        async function cancelChallenge(challengeId) {
+            const result = await Swal.fire({
+                title: 'Cancel Challenge?',
+                text: 'Are you sure you want to cancel this challenge?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, cancel it',
+                cancelButtonText: 'No, keep it',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch('api/cancel-challenge.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ challenge_id: challengeId })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        await Swal.fire({
+                            title: 'Challenge Cancelled',
+                            icon: 'success',
+                            confirmButtonColor: '#667eea'
+                        });
+                        location.reload();
+                    } else {
+                        await Swal.fire({
+                            title: 'Error',
+                            text: data.message || 'Failed to cancel challenge',
+                            icon: 'error',
+                            confirmButtonColor: '#667eea'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error cancelling challenge:', error);
+                    await Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to cancel challenge. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#667eea'
+                    });
+                }
+            }
+        }
+
+        // Auto-refresh challenges every 10 seconds
+        setInterval(() => {
+            // Silently refresh challenge counts
+            fetch('api/get-challenge-counts.php')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.incoming_count > 0) {
+                        const badge = document.querySelector('.badge.bg-primary');
+                        if (badge) {
+                            badge.textContent = `${data.incoming_count} Incoming`;
+                        }
+                    }
+                })
+                .catch(err => console.error('Failed to update challenge counts:', err));
+        }, 10000);
     </script>
     <script src="js/notification-handler.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
