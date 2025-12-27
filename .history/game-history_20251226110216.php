@@ -98,14 +98,12 @@ function renderAvatar($avatar, $presetAvatars) {
             border: none;
         }
 
-    .board-wrap {
-      width: 100%;
-      max-width: 600px;
-      aspect-ratio: 1 / 1;
-      margin: 0 auto;
-      position: relative;
-      padding: 0rem;
-    }
+        .board-wrap {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            margin: 2rem auto;
+        }
 
         svg {
             width: 100%;

@@ -224,7 +224,7 @@ function renderAvatar($avatar, $presetAvatars) {
       aspect-ratio: 1 / 1;
       margin: 0 auto;
       position: relative;
-      padding: 0rem;
+      padding: 2rem;
     }
 
     svg {
