@@ -326,11 +326,17 @@ function renderAvatar($avatar, $presetAvatars) {
 
           <?php if ($isOnlineGame && $opponent): ?>
           <div class="player-info">
-            <div class="player-avatar">
+            <div class="player-avatar" style="position: relative;">
               <?= renderAvatar($opponent['avatar'], $presetAvatars) ?>
+              <span class="opponent-online-status" id="opponentOnlineStatus" style="position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; background: #6c757d; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" title="Checking..."></span>
             </div>
-            <div>
-              <strong><?= htmlspecialchars($opponent['name']) ?></strong>
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2">
+                <strong><?= htmlspecialchars($opponent['name']) ?></strong>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis" id="opponentStatusBadge" style="font-size: 0.7rem;">
+                  Checking...
+                </span>
+              </div>
               <div class="text-muted small">Opponent</div>
             </div>
           </div>
@@ -438,16 +444,16 @@ function exitGame() {
         confirmButtonText: 'Yes, exit',
         cancelButtonText: 'Stay',
         confirmButtonColor: '#667eea'
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            saveGameState();
+            await saveGameState();
             window.location.href = 'dashboard.php';
         }
     });
 }
 
-function exitToLobby() {
-    saveGameState();
+async function exitToLobby() {
+    await saveGameState();
     window.location.href = 'dashboard.php';
 }
 
@@ -482,6 +488,49 @@ function autoSave() {
 
 // Poll for opponent moves in online game
 if (IS_ONLINE) {
+    // Check opponent status
+    async function checkOpponentStatus() {
+        try {
+            const response = await fetch(`api/check-opponent-status.php?session_id=${SESSION_ID}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const statusDot = document.getElementById('opponentOnlineStatus');
+                const statusBadge = document.getElementById('opponentStatusBadge');
+
+                if (statusDot && statusBadge) {
+                    if (data.is_online) {
+                        statusDot.style.background = '#10b981';
+                        statusDot.title = 'Online';
+                        statusBadge.className = 'badge bg-success-subtle text-success-emphasis';
+                        statusBadge.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:currentColor;border-radius:50%;margin-right:4px;"></span>Online';
+                    } else {
+                        statusDot.style.background = '#6c757d';
+                        statusDot.title = 'Offline';
+                        statusBadge.className = 'badge bg-secondary-subtle text-secondary-emphasis';
+                        statusBadge.textContent = 'Offline';
+                    }
+
+                    // Show warning if opponent disconnected during game
+                    if (!data.is_online && data.last_seen) {
+                        const lastSeen = new Date(data.last_seen);
+                        const minutesAgo = Math.floor((Date.now() - lastSeen.getTime()) / 60000);
+                        if (minutesAgo > 5) {
+                            statusBadge.textContent = `Offline (${minutesAgo}m ago)`;
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to check opponent status:', error);
+        }
+    }
+
+    // Check status immediately and then every 10 seconds
+    checkOpponentStatus();
+    setInterval(checkOpponentStatus, 10000);
+
+    // Sync game state every 2 seconds
     setInterval(async () => {
         if (gameOver) return;
 

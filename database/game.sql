@@ -985,6 +985,17 @@ ALTER TABLE `ai_training_data`
   ADD KEY `idx_difficulty` (`difficulty_level`);
 
 --
+-- Indexes for table `game_challenges`
+--
+ALTER TABLE `game_challenges`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_challenger` (`challenger_id`),
+  ADD KEY `idx_challenged` (`challenged_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_session` (`session_id`),
+  ADD KEY `idx_created` (`created_at`);
+
+--
 -- Indexes for table `game_moves`
 --
 ALTER TABLE `game_moves`
@@ -1010,6 +1021,16 @@ ALTER TABLE `matchmaking_queue`
   ADD KEY `idx_user` (`user_id`),
   ADD KEY `idx_rating` (`rating`),
   ADD KEY `idx_joined` (`joined_at`);
+
+--
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_type` (`type`),
+  ADD KEY `idx_is_read` (`is_read`),
+  ADD KEY `idx_created` (`created_at`);
 
 --
 -- Indexes for table `users`
@@ -1064,6 +1085,12 @@ ALTER TABLE `ai_training_data`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
+-- AUTO_INCREMENT for table `game_challenges`
+--
+ALTER TABLE `game_challenges`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `game_moves`
 --
 ALTER TABLE `game_moves`
@@ -1080,6 +1107,12 @@ ALTER TABLE `game_sessions`
 --
 ALTER TABLE `matchmaking_queue`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -1110,6 +1143,14 @@ ALTER TABLE `ai_training_data`
   ADD CONSTRAINT `ai_training_data_ibfk_1` FOREIGN KEY (`session_id`) REFERENCES `game_sessions` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `game_challenges`
+--
+ALTER TABLE `game_challenges`
+  ADD CONSTRAINT `game_challenges_ibfk_1` FOREIGN KEY (`challenger_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `game_challenges_ibfk_2` FOREIGN KEY (`challenged_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `game_challenges_ibfk_3` FOREIGN KEY (`session_id`) REFERENCES `game_sessions` (`id`) ON DELETE SET NULL;
+
+--
 -- Constraints for table `game_moves`
 --
 ALTER TABLE `game_moves`
@@ -1128,6 +1169,12 @@ ALTER TABLE `game_sessions`
 --
 ALTER TABLE `matchmaking_queue`
   ADD CONSTRAINT `matchmaking_queue_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `user_settings`

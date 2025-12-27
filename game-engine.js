@@ -99,14 +99,56 @@ async function loadGameState() {
 
     if (data.success && data.board_state) {
       const state = JSON.parse(data.board_state);
+
+      // Restore complete game state
       board = state.board || Array(9).fill(null);
       placedCount = state.placedCount || { X: 0, O: 0 };
       phase = state.phase || 'placement';
       turn = state.turn || 'X';
       currentMovingPlayer = state.currentMovingPlayer || 'X';
+      gameOver = state.gameOver || false;
+      selectedFrom = null; // Reset selection on reload
 
+      // Calculate move number from board state
+      const piecesOnBoard = board.filter(c => c !== null).length;
+      moveNumber = piecesOnBoard;
+
+      // Log the restored state
+      console.log('Game state restored:', {
+        phase,
+        turn,
+        placedCount,
+        boardFilled: piecesOnBoard,
+        gameOver
+      });
+
+      // Re-render everything
       renderMarks();
       updateUI();
+
+      // Show status message
+      if (!gameOver) {
+        if (phase === 'placement') {
+          statusText.textContent = `Placement Phase - ${placedCount.X}/3 X, ${placedCount.O}/3 O placed`;
+        } else if (phase === 'movement') {
+          statusText.textContent = 'Movement Phase - Click your piece to move';
+        }
+
+        // If it's AI's turn and game not over, trigger AI move after a short delay
+        if (!IS_ONLINE && !gameOver && turn === COMPUTER_PLAYER && GAME_MODE && GAME_MODE.startsWith('pvc')) {
+          setTimeout(() => {
+            if (!computerMoving) {
+              makeComputerMove();
+            }
+          }, 1000);
+        }
+      } else {
+        // Check if there's a winner and show game over state
+        const winner = checkWinner();
+        if (winner) {
+          statusText.textContent = `${getPlayerName(winner)} Wins!`;
+        }
+      }
     }
   } catch (error) {
     console.error('Failed to load game state:', error);
