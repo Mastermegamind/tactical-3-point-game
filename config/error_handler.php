@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/database.php';
 
+if (!class_exists('ErrorHandler', false)) {
 class ErrorHandler {
     private static $db;
     private static $displayErrors = true;
@@ -340,5 +341,9 @@ HTML;
     }
 }
 
+}
+
 // Initialize error handler
-ErrorHandler::init();
+if (class_exists('ErrorHandler', false)) {
+    ErrorHandler::init();
+}
