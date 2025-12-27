@@ -19,6 +19,22 @@ $stmt = $conn->prepare("
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
+// Pagination
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+
+// Get total completed game count for pagination
+$stmt = $conn->prepare("
+    SELECT COUNT(*) as total
+    FROM game_sessions
+    WHERE (player1_id = ? OR player2_id = ?)
+    AND status = 'completed'
+");
+$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+$totalCompletedGames = $stmt->fetch()['total'];
+$totalPages = ceil($totalCompletedGames / $perPage);
+
 // Get recent games
 $stmt = $conn->prepare("
     SELECT gs.*,
@@ -32,9 +48,9 @@ $stmt = $conn->prepare("
     WHERE (gs.player1_id = ? OR gs.player2_id = ?)
     AND gs.status = 'completed'
     ORDER BY gs.completed_at DESC
-    LIMIT 10
+    LIMIT ? OFFSET ?
 ");
-$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id'], $perPage, $offset]);
 $recentGames = $stmt->fetchAll();
 
 $totalGames = $user['wins'] + $user['losses'] + $user['draws'];
@@ -58,6 +74,7 @@ $presetAvatars = [
     <title>Dashboard - Tactical Pebble Game</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         * {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -272,20 +289,60 @@ $presetAvatars = [
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <?php
-                        $isWin = $game['winner_id'] == $_SESSION['user_id'];
+                        // Determine game outcome for current user
+                        $isWin = $game['winner_id'] !== null && $game['winner_id'] == $_SESSION['user_id'];
                         $isDraw = $game['winner_id'] === null;
-                        $badgeClass = $isDraw ? 'badge-draw' : ($isWin ? 'badge-win' : 'badge-loss');
-                        $badgeText = $isDraw ? 'Draw' : ($isWin ? 'Win' : 'Loss');
+                        $isLoss = $game['winner_id'] !== null && $game['winner_id'] != $_SESSION['user_id'];
+
+                        if ($isDraw) {
+                            $badgeClass = 'badge-draw';
+                            $badgeText = 'Draw';
+                        } elseif ($isWin) {
+                            $badgeClass = 'badge-win';
+                            $badgeText = 'Win';
+                        } else {
+                            $badgeClass = 'badge-loss';
+                            $badgeText = 'Loss';
+                        }
                         ?>
                         <span class="badge <?= $badgeClass ?>"><?= $badgeText ?></span>
                         <a href="game-history.php?id=<?= $game['id'] ?>" class="btn btn-sm btn-outline-primary">Replay</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
+
+                <?php if ($totalPages > 1): ?>
+                <nav aria-label="Game history pagination" class="mt-4">
+                    <ul class="pagination pagination-sm justify-content-center">
+                        <?php if ($page > 1): ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<?= $page - 1 ?>">Previous</a>
+                            </li>
+                        <?php endif; ?>
+
+                        <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+                            <li class="page-item <?= $i == $page ? 'active' : '' ?>">
+                                <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+                            </li>
+                        <?php endfor; ?>
+
+                        <?php if ($page < $totalPages): ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<?= $page + 1 ?>">Next</a>
+                            </li>
+                        <?php endif; ?>
+                    </ul>
+                </nav>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const autoStartNotifications = true;
+    </script>
+    <script src="js/notification-handler.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

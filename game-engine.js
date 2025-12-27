@@ -32,6 +32,21 @@ const marksLayer = document.getElementById("marksLayer");
 const turnText = document.getElementById("turnText");
 const statusText = document.getElementById("statusText");
 
+// Helper function to get player name by side
+function getPlayerName(side) {
+  return side === 'X' ? PLAYER_X_NAME : PLAYER_O_NAME;
+}
+
+// Helper function to get current player name
+function getCurrentPlayerName() {
+  if (phase === "placement") {
+    return getPlayerName(turn);
+  } else {
+    const currentPlayer = GAME_MODE === "pvp" || IS_ONLINE ? currentMovingPlayer : turn;
+    return getPlayerName(currentPlayer);
+  }
+}
+
 let board = Array(9).fill(null);
 let turn = "X";
 let gameOver = false;
@@ -42,6 +57,7 @@ let currentMovingPlayer = "X";
 let computerMoving = false;
 let moveNumber = 0;
 let moveStartTime = Date.now();
+let gameStartTime = Date.now();
 
 // Initialize game
 init();
@@ -206,7 +222,26 @@ async function handlePlacement(id) {
     return;
   }
 
+  // TWO-SESSION PLACEMENT SYSTEM
+  // Session 1: Player X places all 3 pebbles
+  // Session 2: Player O places all 3 pebbles
+  if (placedCount.X === 3 && placedCount.O === 0) {
+    // Player X finished placing all pebbles, now it's Player O's turn to place all
+    turn = "O";
+    statusText.textContent = `${PLAYER_O_NAME}'s turn to place all pebbles`;
+    renderMarks();
+    updateUI();
+    await saveGameState();
+
+    // If it's AI's turn, start AI placement
+    if (isComputerTurn()) {
+      makeComputerMove();
+    }
+    return;
+  }
+
   if (placedCount.X === 3 && placedCount.O === 3) {
+    // Both players finished placing, move to movement phase
     phase = "movement";
     selectedFrom = null;
     currentMovingPlayer = "X";
@@ -219,9 +254,10 @@ async function handlePlacement(id) {
 
     // Don't call makeComputerMove here - it's player's turn to move first
     return;
-  } else {
-    turn = turn === "X" ? "O" : "X";
   }
+
+  // During each player's placement session, don't switch turns
+  // Player continues placing until they've placed all 3
 
   renderMarks();
   updateUI();
@@ -249,8 +285,8 @@ async function handleMovement(clickedId) {
     selectedFrom = clickedId;
     moveStartTime = Date.now();
     renderMarks();
-    const color = clickedPiece === "X" ? "Blue" : "Pink";
-    statusText.textContent = `${color} pebble selected - Click where to move`;
+    const playerName = getPlayerName(clickedPiece);
+    statusText.textContent = `${playerName}'s pebble selected - Click where to move`;
     return;
   }
 
@@ -260,8 +296,8 @@ async function handleMovement(clickedId) {
     selectedFrom = clickedId;
     moveStartTime = Date.now();
     renderMarks();
-    const color = board[clickedId] === "X" ? "Blue" : "Pink";
-    statusText.textContent = `${color} pebble selected - Click where to move`;
+    const playerName = getPlayerName(board[clickedId]);
+    statusText.textContent = `${playerName}'s pebble selected - Click where to move`;
     return;
   }
 
@@ -358,10 +394,10 @@ function checkWinner() {
 
 async function endGame(winnerSymbol) {
   gameOver = true;
-  const winnerText = winnerSymbol === PLAYER_SIDE ? "You Win!" :
-                    (IS_ONLINE ? "Opponent Wins!" :
-                    (winnerSymbol === "X" ? "Blue Wins!" : "Pink Wins!"));
-  statusText.textContent = winnerText;
+  const winnerName = getPlayerName(winnerSymbol);
+  const isPlayerWin = winnerSymbol === PLAYER_SIDE;
+
+  statusText.textContent = isPlayerWin ? "You Win!" : `${winnerName} Wins!`;
   selectedFrom = null;
 
   renderMarks();
@@ -392,32 +428,99 @@ async function endGame(winnerSymbol) {
       })
     });
 
-    // Redirect to dashboard after 3 seconds
-    setTimeout(() => {
-      window.location.href = 'dashboard.php';
-    }, 3000);
+    // Show SweetAlert modal with game results
+    showGameResultModal(winnerSymbol, isPlayerWin, winnerName);
+
   } catch (error) {
     console.error('Failed to complete game:', error);
   }
 }
 
+function showGameResultModal(winnerSymbol, isPlayerWin, winnerName) {
+  const totalMoves = moveNumber;
+  const gameDuration = Math.floor((Date.now() - gameStartTime) / 1000); // in seconds
+  const minutes = Math.floor(gameDuration / 60);
+  const seconds = gameDuration % 60;
+
+  const player1Name = PLAYER_X_NAME;
+  const player2Name = PLAYER_O_NAME;
+
+  // Determine icon and title
+  const icon = isPlayerWin ? 'success' : 'error';
+  const title = isPlayerWin ? '🎉 Victory!' : '😔 Defeat';
+
+  // Create HTML content for the modal
+  const htmlContent = `
+    <div style="text-align: center; padding: 1rem;">
+      <h3 style="color: #667eea; margin-bottom: 1.5rem; font-weight: 700;">
+        ${winnerName} Wins!
+      </h3>
+
+      <div style="background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: left;">
+          <div>
+            <div style="font-size: 0.85rem; color: #6c757d; font-weight: 600; margin-bottom: 0.5rem;">PLAYER 1 (X)</div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: #212529;">${player1Name}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; color: #6c757d; font-weight: 600; margin-bottom: 0.5rem;">PLAYER 2 (O)</div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: #212529;">${player2Name}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #f8f9fa; border-radius: 12px; padding: 1.5rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <div style="font-size: 0.85rem; color: #6c757d; font-weight: 600; margin-bottom: 0.5rem;">TOTAL MOVES</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #667eea;">${totalMoves}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; color: #6c757d; font-weight: 600; margin-bottom: 0.5rem;">GAME DURATION</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #667eea;">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+          </div>
+        </div>
+      </div>
+
+      ${isPlayerWin ?
+        '<div style="margin-top: 1rem; padding: 1rem; background: #d1f4e0; border-radius: 8px; color: #1e7e34; font-weight: 600;">+25 Rating Points</div>' :
+        '<div style="margin-top: 1rem; padding: 1rem; background: #f8d7da; border-radius: 8px; color: #721c24; font-weight: 600;">-10 Rating Points</div>'
+      }
+    </div>
+  `;
+
+  Swal.fire({
+    title: title,
+    html: htmlContent,
+    icon: icon,
+    confirmButtonText: 'Back to Dashboard',
+    confirmButtonColor: '#667eea',
+    allowOutsideClick: false,
+    customClass: {
+      popup: 'game-result-modal'
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = 'dashboard.php';
+    }
+  });
+}
+
 function updateUI() {
-  if (phase === "placement") {
-    turnText.textContent = turn === "X" ? "Blue" : "Pink";
-  } else {
-    // In movement phase, show current turn
-    const currentPlayer = GAME_MODE === "pvp" || IS_ONLINE ? currentMovingPlayer : turn;
-    turnText.textContent = currentPlayer === "X" ? "Blue" : "Pink";
-  }
+  // Update current turn display
+  turnText.textContent = getCurrentPlayerName();
 
   if (!gameOver) {
     if (phase === "placement") {
-      statusText.textContent =
-        `Place your pebbles (${placedCount.X}/3 Blue, ${placedCount.O}/3 Pink)`;
+      if (turn === "X") {
+        statusText.textContent = `${PLAYER_X_NAME}: Place your pebbles (${placedCount.X}/3 placed)`;
+      } else {
+        statusText.textContent = `${PLAYER_O_NAME}: Place your pebbles (${placedCount.O}/3 placed)`;
+      }
     } else {
       if (selectedFrom === null) {
         if (IS_ONLINE && turn !== PLAYER_SIDE) {
-          statusText.textContent = "Opponent's turn";
+          statusText.textContent = `${getCurrentPlayerName()}'s turn`;
         } else if (GAME_MODE !== "pvp" && !IS_ONLINE && turn === COMPUTER_PLAYER) {
           statusText.textContent = "AI is thinking...";
         } else {

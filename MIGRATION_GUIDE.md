@@ -1,0 +1,171 @@
+# Migration Guide for New Features
+
+This guide explains how to apply the new database changes to your Tactical Pebble Game installation.
+
+## Features Added
+
+1. **PvP Challenge System** - Players can now select and challenge specific online users
+2. **Real-time Notifications** - Toast notifications and SweetAlert2 for challenge requests
+3. **Error Logging System** - Comprehensive error tracking with admin viewing interface
+4. **Pagination** - Game history pagination on dashboard
+5. **Fixed Draw/Loss Labels** - Corrected display of game outcomes
+
+## Database Migration
+
+### Option 1: Run the migration script
+
+```bash
+mysql -u your_username -p game_db < database/migrate-new-features.sql
+```
+
+### Option 2: Import the full updated schema
+
+If you prefer to start fresh with all tables:
+
+```bash
+mysql -u your_username -p game_db < database/game.sql
+```
+
+**Warning:** This will drop all existing tables and data!
+
+## New Database Tables
+
+The migration adds three new tables:
+
+1. **game_challenges** - Stores player-to-player challenge requests
+   - Tracks challenge status (pending, accepted, rejected, cancelled, expired)
+   - Automatically expires after 2 minutes
+
+2. **notifications** - Real-time notification system
+   - Supports challenge, game_start, game_end, and system notifications
+   - Stores JSON data for flexible notification types
+
+3. **error_logs** - Comprehensive error logging
+   - Captures stack traces, request details, and session data
+   - Helps debug issues in production
+
+## New Files Created
+
+### Backend Files
+- `/config/ErrorLogger.php` - Error logging helper class
+- `/api/get-online-users.php` - Fetch online players
+- `/api/send-challenge.php` - Send challenge to another player
+- `/api/respond-challenge.php` - Accept or reject challenges
+- `/api/get-notifications.php` - Retrieve user notifications
+- `/api/mark-notification-read.php` - Mark notifications as read
+- `/admin-errors.php` - Admin interface for viewing error logs
+
+### Frontend Files
+- `/js/notification-handler.js` - Global notification polling and handling
+- `/database/migrate-new-features.sql` - Database migration script
+
+### Updated Files
+- `/database/game.sql` - Updated with new tables
+- `/game-settings.php` - Added online user selection and challenge system
+- `/dashboard.php` - Added pagination and fixed draw/loss labels
+
+## Features Usage
+
+### PvP Challenge System
+
+**For Players:**
+1. Go to "Start New Game" from dashboard
+2. Select "Player vs Player"
+3. Choose "Challenge Online Player"
+4. Select a player from the online list
+5. Wait for them to accept/reject (2-minute timeout)
+
+**For Random Matchmaking:**
+- Still available under "Random Matchmaking" option
+- Maintains the original skill-based matching
+
+### Notifications
+
+Notifications appear automatically as:
+- **SweetAlert Popups** for challenge requests (with Accept/Decline buttons)
+- **Toast Notifications** for other events
+- Auto-polling every 5 seconds on dashboard and game-settings pages
+
+### Error Logging
+
+**For Admins:**
+1. Visit `/admin-errors.php` (restricted to user ID = 1 by default)
+2. Filter errors by type
+3. Click any error to view detailed stack trace and context
+4. Errors auto-log throughout the application
+
+**To Add Admin Access:**
+You can modify the admin check in `admin-errors.php` line 17-20 to add more admin users.
+
+## SweetAlert2 Integration
+
+All system alerts now use SweetAlert2 for better UX:
+- Success messages with auto-dismiss
+- Confirmation dialogs for challenges
+- Error alerts with detailed messages
+- Toast notifications for non-blocking updates
+
+## Pagination
+
+The dashboard game history now shows:
+- 10 games per page
+- Page navigation (Previous/Next + page numbers)
+- Shows up to 5 page links at a time
+
+## Fixed Issues
+
+1. **Draw vs Loss Label Bug** - Previously, losses were sometimes displayed as "Draw"
+   - Now correctly checks if `winner_id` is NULL (draw) vs not matching current user (loss)
+
+2. **Alert Blocking** - Replaced JavaScript `alert()` with SweetAlert2 for non-blocking notifications
+
+## Configuration
+
+### Notification Polling Interval
+Edit `/js/notification-handler.js` line 14 to change polling frequency:
+```javascript
+this.pollInterval = setInterval(() => this.poll(), 5000); // 5 seconds
+```
+
+### Challenge Expiration Time
+Edit `/api/send-challenge.php` line 52 to change timeout:
+```php
+$expiresAt = date('Y-m-d H:i:s', strtotime('+2 minutes')); // Change to '+5 minutes' etc.
+```
+
+### Items Per Page
+Edit `/dashboard.php` line 24 to change pagination:
+```php
+$perPage = 10; // Change to desired number
+```
+
+## Troubleshooting
+
+### Notifications Not Working
+1. Check browser console for JavaScript errors
+2. Verify `/js/notification-handler.js` is loaded
+3. Check if `autoStartNotifications` is set to `true`
+
+### Challenge System Not Working
+1. Verify new database tables exist: `SHOW TABLES LIKE 'game_challenges';`
+2. Check that users have `is_online = 1` in the database
+3. Review error logs at `/admin-errors.php`
+
+### Error Logs Not Saving
+1. Check database table exists: `SHOW TABLES LIKE 'error_logs';`
+2. Verify ErrorLogger is included: `require_once 'config/ErrorLogger.php';`
+3. Check file permissions on `/config/ErrorLogger.php`
+
+## Future Enhancements
+
+Consider adding:
+- WebSocket support for instant notifications (replace polling)
+- Admin user role system (dedicated `is_admin` column)
+- Email notifications for challenge requests
+- Challenge history tracking
+- Rematch functionality
+- Friend system with favorite opponents
+
+## Support
+
+If you encounter any issues, check the error logs at `/admin-errors.php` for detailed debugging information.

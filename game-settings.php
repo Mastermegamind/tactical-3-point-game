@@ -14,6 +14,7 @@ if (!isset($_SESSION['user_id'])) {
     <title>Game Settings - Tactical Pebble Game</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         * {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -180,6 +181,87 @@ if (!isset($_SESSION['user_id'])) {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .user-card {
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .user-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+            padding: 0.5rem;
+            background: white;
+        }
+
+        .user-avatar svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .user-details h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .user-stats {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .btn-challenge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: white;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-challenge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-challenge:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
     </style>
 </head>
 <body>
@@ -192,7 +274,7 @@ if (!isset($_SESSION['user_id'])) {
         <div id="mode-selection">
             <div class="mode-option" onclick="selectMode('pvp')">
                 <div class="mode-title">Player vs Player</div>
-                <div class="mode-description">Find an online opponent with similar skill level</div>
+                <div class="mode-description">Challenge an online player or find a random opponent</div>
             </div>
 
             <div class="mode-option" onclick="selectMode('ai')">
@@ -223,12 +305,57 @@ if (!isset($_SESSION['user_id'])) {
             <p class="text-muted">Please wait while we match you with a player</p>
             <button class="btn btn-secondary-custom" onclick="cancelMatchmaking()">Cancel</button>
         </div>
+
+        <div id="pvp-mode-selection" style="display: none;">
+            <h4 class="mb-4">Choose PvP Mode</h4>
+
+            <div class="mode-option" onclick="selectPvPMode('challenge')">
+                <div class="mode-title">Challenge Online Player</div>
+                <div class="mode-description">Select from available online players to challenge</div>
+            </div>
+
+            <div class="mode-option" onclick="selectPvPMode('random')">
+                <div class="mode-title">Random Matchmaking</div>
+                <div class="mode-description">Find an opponent with similar skill level automatically</div>
+            </div>
+
+            <button class="btn btn-secondary-custom" onclick="backToModeSelection()">
+                Back
+            </button>
+        </div>
+
+        <div id="online-users-list" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Online Players</h4>
+                <button class="btn btn-sm btn-secondary" onclick="refreshOnlineUsers()">
+                    <span id="refresh-icon">🔄</span> Refresh
+                </button>
+            </div>
+
+            <div id="users-container" style="max-height: 400px; overflow-y: auto;">
+                <!-- Online users will be loaded here -->
+            </div>
+
+            <button class="btn btn-secondary-custom mt-3" onclick="backToPvPModeSelection()">
+                Back
+            </button>
+        </div>
     </div>
 
     <script>
         let selectedMode = null;
         let selectedDifficulty = 'medium';
         let matchmakingInterval = null;
+        let pvpMode = null;
+
+        const presetAvatars = {
+            'avatar1.svg': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#667eea"/><circle cx="35" cy="40" r="5" fill="#fff"/><circle cx="65" cy="40" r="5" fill="#fff"/><path d="M30 65 Q50 75 70 65" stroke="#fff" stroke-width="3" fill="none"/></svg>',
+            'avatar2.svg': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#f093fb"/><circle cx="35" cy="40" r="5" fill="#fff"/><circle cx="65" cy="40" r="5" fill="#fff"/><circle cx="50" cy="65" r="8" fill="#fff"/></svg>',
+            'avatar3.svg': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#4facfe"/><circle cx="35" cy="40" r="5" fill="#fff"/><circle cx="65" cy="40" r="5" fill="#fff"/><rect x="35" y="60" width="30" height="5" fill="#fff"/></svg>',
+            'avatar4.svg': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#43e97b"/><circle cx="35" cy="40" r="5" fill="#fff"/><circle cx="65" cy="40" r="5" fill="#fff"/><path d="M35 65 L50 60 L65 65" stroke="#fff" stroke-width="3" fill="none"/></svg>',
+            'avatar5.svg': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#fa709a"/><circle cx="35" cy="40" r="5" fill="#fff"/><circle cx="65" cy="40" r="5" fill="#fff"/><ellipse cx="50" cy="65" rx="15" ry="8" fill="#fff"/></svg>',
+            'avatar6.svg': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#764ba2"/><circle cx="35" cy="40" r="5" fill="#fff"/><circle cx="65" cy="40" r="5" fill="#fff"/><path d="M30 70 Q50 60 70 70" stroke="#fff" stroke-width="3" fill="none"/></svg>'
+        };
 
         function selectMode(mode) {
             selectedMode = mode;
@@ -262,31 +389,208 @@ if (!isset($_SESSION['user_id'])) {
             if (!selectedMode) return;
 
             if (selectedMode === 'pvp') {
-                // Start matchmaking
+                // Show PvP mode selection
                 document.getElementById('mode-selection').style.display = 'none';
-                document.getElementById('matchmaking-status').classList.add('show');
-
-                try {
-                    const response = await fetch('api/join-matchmaking.php', {
-                        method: 'POST'
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        // Poll for match
-                        pollForMatch();
-                    } else {
-                        alert(data.message || 'Failed to join matchmaking');
-                        cancelMatchmaking();
-                    }
-                } catch (error) {
-                    alert('An error occurred. Please try again.');
-                    cancelMatchmaking();
-                }
+                document.getElementById('pvp-mode-selection').style.display = 'block';
             } else {
                 // Start AI game
                 window.location.href = `play.php?mode=pvc-${selectedDifficulty}`;
+            }
+        }
+
+        function selectPvPMode(mode) {
+            pvpMode = mode;
+
+            if (mode === 'challenge') {
+                // Show online users list
+                document.getElementById('pvp-mode-selection').style.display = 'none';
+                document.getElementById('online-users-list').style.display = 'block';
+                loadOnlineUsers();
+            } else {
+                // Start random matchmaking
+                document.getElementById('pvp-mode-selection').style.display = 'none';
+                startMatchmaking();
+            }
+        }
+
+        async function loadOnlineUsers() {
+            const container = document.getElementById('users-container');
+            container.innerHTML = '<div class="text-center"><div class="spinner"></div><p>Loading online players...</p></div>';
+
+            try {
+                const response = await fetch('api/get-online-users.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    displayOnlineUsers(data.users);
+                } else {
+                    container.innerHTML = '<div class="empty-state"><p>Failed to load online users</p></div>';
+                }
+            } catch (error) {
+                console.error('Error loading online users:', error);
+                container.innerHTML = '<div class="empty-state"><p>An error occurred</p></div>';
+            }
+        }
+
+        function displayOnlineUsers(users) {
+            const container = document.getElementById('users-container');
+
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        <h6>No players online</h6>
+                        <p>Try random matchmaking or come back later</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = users.map(user => {
+                const avatarHtml = presetAvatars[user.avatar] || presetAvatars['avatar1.svg'];
+                const totalGames = parseInt(user.wins) + parseInt(user.losses) + parseInt(user.draws);
+                const winRate = totalGames > 0 ? Math.round((user.wins / totalGames) * 100) : 0;
+
+                return `
+                    <div class="user-card">
+                        <div class="user-info">
+                            <div class="user-avatar">${avatarHtml}</div>
+                            <div class="user-details">
+                                <h6>${escapeHtml(user.username)}</h6>
+                                <div class="user-stats">
+                                    Rating: ${user.rating} • W/L: ${user.wins}/${user.losses} • Win Rate: ${winRate}%
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-challenge" onclick="challengeUser(${user.id}, '${escapeHtml(user.username)}')"
+                                ${user.has_pending_challenge ? 'disabled' : ''}>
+                            ${user.has_pending_challenge ? 'Challenge Sent' : 'Challenge'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function refreshOnlineUsers() {
+            const icon = document.getElementById('refresh-icon');
+            icon.style.display = 'inline-block';
+            icon.style.animation = 'spin 1s linear infinite';
+            await loadOnlineUsers();
+            setTimeout(() => {
+                icon.style.animation = 'none';
+            }, 500);
+        }
+
+        async function challengeUser(userId, username) {
+            try {
+                const response = await fetch('api/send-challenge.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ challenged_id: userId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Challenge Sent!',
+                        text: `Waiting for ${username} to accept your challenge...`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    // Start polling for challenge response
+                    pollForChallengeResponse(data.challenge_id);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed',
+                        text: data.message || 'Failed to send challenge'
+                    });
+                }
+            } catch (error) {
+                console.error('Error sending challenge:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred. Please try again.'
+                });
+            }
+        }
+
+        function pollForChallengeResponse(challengeId) {
+            // Show waiting status
+            document.getElementById('online-users-list').style.display = 'none';
+            document.getElementById('matchmaking-status').classList.add('show');
+            document.querySelector('#matchmaking-status h5').textContent = 'Waiting for opponent to accept...';
+            document.querySelector('#matchmaking-status p').textContent = 'The challenge will expire in 2 minutes';
+
+            matchmakingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('api/check-match.php');
+                    const data = await response.json();
+
+                    if (data.matched) {
+                        clearInterval(matchmakingInterval);
+                        window.location.href = `play.php?session=${data.session_id}`;
+                    }
+                } catch (error) {
+                    console.error('Challenge poll error:', error);
+                }
+            }, 2000);
+
+            // Auto-cancel after 2 minutes
+            setTimeout(() => {
+                if (matchmakingInterval) {
+                    clearInterval(matchmakingInterval);
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Challenge Expired',
+                        text: 'The challenge timed out after 2 minutes',
+                        timer: 3000
+                    });
+                    backToOnlineUsers();
+                }
+            }, 120000);
+        }
+
+        async function startMatchmaking() {
+            document.getElementById('matchmaking-status').classList.add('show');
+            document.querySelector('#matchmaking-status h5').textContent = 'Finding opponent...';
+            document.querySelector('#matchmaking-status p').textContent = 'Please wait while we match you with a player';
+
+            try {
+                const response = await fetch('api/join-matchmaking.php', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    pollForMatch();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Matchmaking Failed',
+                        text: data.message || 'Failed to join matchmaking'
+                    });
+                    cancelMatchmaking();
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred. Please try again.'
+                });
+                cancelMatchmaking();
             }
         }
 
@@ -313,11 +617,32 @@ if (!isset($_SESSION['user_id'])) {
 
             await fetch('api/leave-matchmaking.php', { method: 'POST' });
 
-            document.getElementById('mode-selection').style.display = 'block';
             document.getElementById('matchmaking-status').classList.remove('show');
+            document.getElementById('mode-selection').style.display = 'block';
+        }
+
+        function backToModeSelection() {
+            document.getElementById('pvp-mode-selection').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'block';
+        }
+
+        function backToPvPModeSelection() {
+            document.getElementById('online-users-list').style.display = 'none';
+            document.getElementById('pvp-mode-selection').style.display = 'block';
+        }
+
+        function backToOnlineUsers() {
+            document.getElementById('matchmaking-status').classList.remove('show');
+            document.getElementById('online-users-list').style.display = 'block';
+            loadOnlineUsers();
         }
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const autoStartNotifications = true;
+    </script>
+    <script src="js/notification-handler.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -103,6 +103,7 @@ function renderAvatar($avatar, $presetAvatars) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
   <style>
     * {
@@ -321,7 +322,7 @@ function renderAvatar($avatar, $presetAvatars) {
           <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div class="stat-label">Current Turn</div>
-              <div class="stat-value" id="turnText">Blue</div>
+              <div class="stat-value" id="turnText"><?= $playerSide === 'X' ? htmlspecialchars($currentUser['username']) : ($isOnlineGame && $opponent ? htmlspecialchars($opponent['name']) : 'AI') ?></div>
             </div>
             <div class="mt-3">
               <div class="stat-label">Status</div>
@@ -380,9 +381,14 @@ const PLAYER_SIDE = '<?= $playerSide ?>';
 const COMPUTER_PLAYER = 'O';
 const USER_ID = <?= $_SESSION['user_id'] ?>;
 
+// Player names for display
+const PLAYER_X_NAME = '<?= $playerSide === 'X' ? htmlspecialchars($currentUser['username'], ENT_QUOTES) : ($isOnlineGame && $opponent ? htmlspecialchars($opponent['name'], ENT_QUOTES) : 'Blue') ?>';
+const PLAYER_O_NAME = '<?= $playerSide === 'O' ? htmlspecialchars($currentUser['username'], ENT_QUOTES) : ($isOnlineGame && $opponent ? htmlspecialchars($opponent['name'], ENT_QUOTES) : (strpos($mode, 'pvc') !== false ? 'AI' : 'Pink')) ?>';
+
 // Include the original game.js logic here (will be loaded separately)
 </script>
 <script src="game-engine.js?v=<?= time() ?>"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -393,10 +399,20 @@ function pauseGame() {
 }
 
 function exitGame() {
-    if (confirm('Are you sure you want to exit? Your progress will be saved.')) {
-        saveGameState();
-        window.location.href = 'dashboard.php';
-    }
+    Swal.fire({
+        title: 'Exit Game?',
+        text: 'Are you sure you want to exit? Your progress will be saved.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, exit',
+        cancelButtonText: 'Stay',
+        confirmButtonColor: '#667eea'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            saveGameState();
+            window.location.href = 'dashboard.php';
+        }
+    });
 }
 
 function exitToLobby() {
