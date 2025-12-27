@@ -40,6 +40,19 @@ function getPlayerName(side) {
 // Helper function to get current player name
 function getCurrentPlayerName() {
   if (phase === "placement") {
+    // During placement in online mode, show who needs to place next
+    if (IS_ONLINE) {
+      const myCount = placedCount[PLAYER_SIDE];
+      const opponentSide = PLAYER_SIDE === 'X' ? 'O' : 'X';
+      const opponentCount = placedCount[opponentSide];
+
+      // If both finished, shouldn't be in placement anymore
+      if (myCount >= 3 && opponentCount >= 3) {
+        return "Transitioning...";
+      }
+      // Show whose turn it is to place
+      return turn === PLAYER_SIDE ? "Your Turn" : getPlayerName(turn);
+    }
     return getPlayerName(turn);
   } else {
     const currentPlayer = GAME_MODE === "pvp" || IS_ONLINE ? currentMovingPlayer : turn;
@@ -329,8 +342,16 @@ async function handlePlacement(id) {
     return;
   }
 
-  // Alternate turns between players after each placement
-  turn = turn === "X" ? "O" : "X";
+  // Determine next turn based on who still needs to place
+  // If one player finished but the other hasn't, give turn to the one who hasn't
+  if (placedCount.X === 3 && placedCount.O < 3) {
+    turn = "O"; // X finished, O still needs to place
+  } else if (placedCount.O === 3 && placedCount.X < 3) {
+    turn = "X"; // O finished, X still needs to place
+  } else {
+    // Both still have pebbles to place, alternate normally
+    turn = turn === "X" ? "O" : "X";
+  }
 
   renderMarks();
   updateUI();
@@ -615,10 +636,30 @@ function updateUI() {
 
   if (!gameOver) {
     if (phase === "placement") {
-      if (turn === "X") {
-        statusText.textContent = `${PLAYER_X_NAME}: Place your pebbles (${placedCount.X}/3 placed)`;
+      // In online mode, show clearer status based on placement progress
+      if (IS_ONLINE) {
+        const myCount = placedCount[PLAYER_SIDE];
+        const opponentSide = PLAYER_SIDE === 'X' ? 'O' : 'X';
+        const opponentCount = placedCount[opponentSide];
+
+        if (myCount < 3) {
+          // You still need to place
+          if (turn === PLAYER_SIDE) {
+            statusText.textContent = `Your turn: Place your pebbles (${myCount}/3 placed)`;
+          } else {
+            statusText.textContent = `Wait for opponent (You: ${myCount}/3, Opponent: ${opponentCount}/3)`;
+          }
+        } else if (opponentCount < 3) {
+          // You finished, waiting for opponent
+          statusText.textContent = `Waiting for opponent to finish placement (${opponentCount}/3)`;
+        }
       } else {
-        statusText.textContent = `${PLAYER_O_NAME}: Place your pebbles (${placedCount.O}/3 placed)`;
+        // Local game status
+        if (turn === "X") {
+          statusText.textContent = `${PLAYER_X_NAME}: Place your pebbles (${placedCount.X}/3 placed)`;
+        } else {
+          statusText.textContent = `${PLAYER_O_NAME}: Place your pebbles (${placedCount.O}/3 placed)`;
+        }
       }
     } else {
       if (selectedFrom === null) {

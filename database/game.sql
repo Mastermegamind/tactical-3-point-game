@@ -1,10 +1,10 @@
 -- phpMyAdmin SQL Dump
--- version 6.0.0-dev+20251014.c784570216
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 27, 2025 at 06:35 AM
--- Server version: 10.11.14-MariaDB-0+deb12u2
+-- Generation Time: Dec 27, 2025 at 12:12 PM
+-- Server version: 10.11.13-MariaDB-0ubuntu0.24.04.1
 -- PHP Version: 8.4.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -45,7 +45,7 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `username`, `email`, `password`, `full_name`, `role`, `is_active`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'super-admin', 'admin@megamindtechnologies.com', '$2y$12$l8kBztsQvw1GIomOQ..7s.3dEYUK9096X8wJgXWwYHUjowblK7akC', 'System Administrator', 'super_admin', 1, '2025-12-27 06:23:27', '2025-12-27 04:15:21', '2025-12-27 06:23:27');
+(1, 'super-admin', 'admin@megamindtechnologies.com', '$2y$12$l8kBztsQvw1GIomOQ..7s.3dEYUK9096X8wJgXWwYHUjowblK7akC', 'System Administrator', 'super_admin', 1, '2025-12-27 09:26:23', '2025-12-27 04:15:21', '2025-12-27 09:26:23');
 
 -- --------------------------------------------------------
 
@@ -70,7 +70,8 @@ CREATE TABLE `admin_activity_log` (
 
 INSERT INTO `admin_activity_log` (`id`, `admin_id`, `action`, `target_type`, `target_id`, `description`, `ip_address`, `created_at`) VALUES
 (1, 1, 'login', NULL, NULL, 'Admin logged in', '127.0.0.1', '2025-12-27 05:07:29'),
-(2, 1, 'login', NULL, NULL, 'Admin logged in', '127.0.0.1', '2025-12-27 06:23:27');
+(2, 1, 'login', NULL, NULL, 'Admin logged in', '127.0.0.1', '2025-12-27 06:23:27'),
+(3, 1, 'login', NULL, NULL, 'Admin logged in', '102.90.116.137', '2025-12-27 09:26:23');
 
 -- --------------------------------------------------------
 
@@ -95,7 +96,8 @@ CREATE TABLE `admin_sessions` (
 
 INSERT INTO `admin_sessions` (`id`, `admin_id`, `session_token`, `ip_address`, `user_agent`, `login_time`, `logout_time`, `is_active`) VALUES
 (1, 1, '0d261e08dfa04ba4c82f3ffa0edf7f44271ad089c72cfe11de4be809c7c24612', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0', '2025-12-27 05:07:29', NULL, 1),
-(2, 1, 'c84dadaf372376893ded6bb0de029da35696a9a449fe65618cf157a7e50bc88d', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0', '2025-12-27 06:23:27', NULL, 1);
+(2, 1, 'c84dadaf372376893ded6bb0de029da35696a9a449fe65618cf157a7e50bc88d', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0', '2025-12-27 06:23:27', NULL, 1),
+(3, 1, '268513d7de81abc93a99ec148905fd6ffa4dbb7a07b1ea591e4ce086a0ac9f7d', '102.90.116.137', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36', '2025-12-27 09:26:23', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -135,38 +137,52 @@ CREATE TABLE `ai_strategies` (
 --
 
 INSERT INTO `ai_strategies` (`id`, `strategy_name`, `difficulty_level`, `board_state`, `ai_pieces_positions`, `opponent_pieces_positions`, `move_from`, `move_to`, `move_type`, `game_phase`, `opponent_pattern`, `strategy_type`, `success_count`, `failure_count`, `success_rate`, `total_uses`, `avg_moves_to_win`, `board_evaluation_score`, `threat_level`, `priority_score`, `notes`, `created_at`, `last_used_at`, `updated_at`) VALUES
-(1, 'winning-sequence', 'hard', '[null,\"X\",\"X\",null,\"X\",null,null,null,null]', '[]', '[1,2,4]', NULL, 0, 'placement', 'placement', 'center-focused', 'offensive', 3, 0, 100.00, 3, NULL, 25.0455, 10, 78, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(2, 'defensive-block', 'hard', '[\"O\",\"X\",\"X\",null,\"X\",null,null,null,null]', '[0]', '[1,2,4]', NULL, 7, 'placement', 'placement', 'center-focused', 'defensive', 5, 0, 100.00, 5, 8.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(3, 'defensive-block', 'hard', '[\"O\",\"X\",\"X\",null,\"X\",null,null,\"O\",null]', '[0,7]', '[1,2,4]', NULL, 6, 'placement', 'placement', 'center-focused', 'defensive', 4, 0, 100.00, 4, 12.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(4, 'tactical-move', 'hard', '[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null]', '[0,6,7]', '[1,3,4]', 0, 8, 'movement', 'movement', 'center-focused', 'defensive', 5, 0, 100.00, 5, 12.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(5, 'winning-sequence', 'hard', '[null,null,null,null,\"X\",null,\"X\",\"X\",null]', '[]', '[4,6,7]', NULL, 8, 'placement', 'placement', 'center-focused', 'offensive', 1, 0, 0.00, 1, 8.00, -220.0000, 10, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(6, 'defensive-block', 'hard', '[null,null,null,null,\"X\",null,\"X\",\"X\",\"O\"]', '[8]', '[4,6,7]', NULL, 1, 'placement', 'placement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 8.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(7, 'defensive-block', 'hard', '[null,\"O\",null,null,\"X\",null,\"X\",\"X\",\"O\"]', '[1,8]', '[4,6,7]', NULL, 2, 'placement', 'placement', 'center-focused', 'defensive', 3, 0, 100.00, 3, 10.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(8, 'tactical-move', 'hard', '[\"X\",\"O\",\"O\",null,null,null,\"X\",\"X\",\"O\"]', '[1,2,8]', '[0,6,7]', 1, 5, 'movement', 'movement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 10.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(9, 'tactical-move', 'hard', '[null,null,null,null,\"X\",null,null,null,null]', '[]', '[4]', NULL, 0, 'placement', 'placement', 'center-focused', 'balanced', 8, 0, 100.00, 8, 12.00, -10.0000, 4, 67, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(10, 'tactical-move', 'hard', '[\"O\",null,null,null,\"X\",null,null,null,\"X\"]', '[0]', '[4,8]', NULL, 2, 'placement', 'placement', 'center-focused', 'balanced', 2, 0, 100.00, 2, 26.00, 10.0000, 7, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(11, 'defensive-block', 'hard', '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '[0,2,7]', '[1,4,5]', 0, 3, 'movement', 'movement', 'center-focused', 'defensive', 4, 0, 100.00, 4, 26.00, -60.0000, 6, 52, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(12, 'defensive-block', 'hard', '[null,\"X\",\"O\",\"O\",\"X\",null,null,\"O\",\"X\"]', '[2,3,7]', '[1,4,8]', 2, 0, 'movement', 'movement', 'center-focused', 'defensive', 3, 0, 100.00, 3, 12.00, -25.0000, 6, 63, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(13, 'tactical-move', 'hard', '[\"O\",\"X\",null,\"O\",null,null,\"X\",\"O\",\"X\"]', '[0,3,7]', '[1,6,8]', 0, 4, 'movement', 'movement', 'center-focused', 'balanced', 2, 0, 100.00, 2, 54.00, 0.0000, 4, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(14, 'tactical-move', 'hard', '[\"X\",\"X\",null,\"O\",\"O\",null,\"X\",\"O\",null]', '[3,4,7]', '[0,1,6]', 7, 5, 'movement', 'movement', 'center-focused', 'balanced', 3, 0, 100.00, 3, 26.00, -5.0000, 6, 69, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(15, 'tactical-move', 'hard', '[\"X\",null,null,null,null,null,null,null,null]', '[]', '[0]', NULL, 4, 'placement', 'placement', 'balanced', 'balanced', 2, 0, 100.00, 2, 26.00, 0.0000, 3, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(16, 'winning-sequence', 'hard', '[\"O\",null,null,\"X\",\"X\",null,null,null,null]', '[0]', '[3,4]', NULL, 5, 'placement', 'placement', 'center-focused', 'offensive', 3, 0, 100.00, 3, NULL, 18.2000, 6, 75, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(17, 'defensive-block', 'hard', '[\"O\",\"O\",null,null,\"X\",\"O\",\"X\",\"X\",null]', '[0,1,5]', '[4,6,7]', 5, 2, 'movement', 'movement', 'center-focused', 'defensive', 9, 0, 100.00, 9, 54.00, -60.0000, 10, 52, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(18, 'defensive-block', 'hard', '[\"O\",\"X\",null,\"X\",\"X\",null,null,\"O\",null]', '[0,7]', '[1,3,4]', NULL, 5, 'placement', 'placement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 12.00, -80.0000, 7, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(19, 'tactical-move', 'hard', '[null,\"X\",null,\"X\",\"O\",\"O\",null,\"O\",\"X\"]', '[4,5,7]', '[1,3,8]', 5, 2, 'movement', 'movement', 'center-focused', 'balanced', 4, 0, 100.00, 4, 26.00, 10.0000, 2, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(20, 'tactical-move', 'hard', '[\"O\",\"X\",null,null,\"O\",null,\"X\",\"O\",\"X\"]', '[0,4,7]', '[1,6,8]', 0, 3, 'movement', 'movement', 'center-focused', 'balanced', 10, 0, 100.00, 10, 12.00, 0.0000, 3, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(21, 'tactical-move', 'hard', '[null,\"X\",\"O\",null,\"O\",\"X\",\"X\",\"O\",null]', '[2,4,7]', '[1,5,6]', 2, 0, 'movement', 'movement', 'center-focused', 'balanced', 4, 0, 100.00, 4, 54.00, 10.0000, 1, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(22, 'winning-sequence', 'hard', '[\"O\",null,null,null,\"X\",null,\"X\",null,null]', '[0]', '[4,6]', NULL, 2, 'placement', 'placement', 'center-focused', 'offensive', 2, 0, 100.00, 2, NULL, 18.6667, 7, 76, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(23, 'tactical-move', 'hard', '[\"O\",null,\"O\",null,\"X\",\"X\",\"X\",\"O\",null]', '[0,2,7]', '[4,5,6]', 7, 1, 'movement', 'movement', 'center-focused', 'defensive', 3, 0, 100.00, 3, 12.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(24, 'winning-sequence', 'hard', '[\"O\",\"X\",null,null,\"X\",null,null,null,null]', '[0]', '[1,4]', NULL, 7, 'placement', 'placement', 'center-focused', 'offensive', 2, 0, 100.00, 2, NULL, 18.6667, 6, 76, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(25, 'defensive-block', 'hard', '[\"X\",null,null,null,\"O\",null,\"X\",null,null]', '[4]', '[0,6]', NULL, 3, 'placement', 'placement', 'corner-strategy', 'defensive', 1, 0, 0.00, 1, 26.00, -60.0000, 6, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(26, 'winning-sequence', 'hard', '[\"O\",null,null,\"X\",\"X\",\"O\",null,\"X\",null]', '[0,5]', '[3,4,7]', NULL, 1, 'placement', 'placement', 'center-focused', 'offensive', 1, 0, 0.00, 1, 12.00, -80.0000, 8, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(27, 'defensive-block', 'hard', '[\"O\",\"O\",\"X\",null,\"X\",\"O\",null,\"X\",null]', '[0,1,5]', '[2,4,7]', 0, 6, 'movement', 'movement', 'center-focused', 'defensive', 1, 0, 0.00, 1, 12.00, -80.0000, 7, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(28, 'tactical-move', 'hard', '[\"X\",null,\"X\",null,\"X\",\"O\",\"O\",null,\"O\"]', '[5,6,8]', '[0,2,4]', 5, 7, 'movement', 'movement', 'center-focused', 'defensive', 1, 0, 0.00, 1, 12.00, -25.0000, 9, 40, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(29, 'opening-move', 'hard', '[null,null,null,null,\"O\",null,null,null,null]', '[4]', '[]', NULL, 4, 'placement', 'placement', 'unknown', 'offensive', 1, 0, 0.00, 1, NULL, 10.0000, 0, 60, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(30, 'high-value-position', 'hard', '[null,\"O\",null,null,null,null,null,null,null]', '[1]', '[]', NULL, 1, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 10.4000, 0, 60, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(31, 'high-value-position', 'hard', '[null,null,null,null,null,null,\"O\",null,null]', '[6]', '[]', NULL, 6, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 14.0000, 0, 64, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23'),
-(32, 'high-value-position', 'hard', '[null,null,null,null,null,null,null,null,\"O\"]', '[8]', '[]', NULL, 8, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 11.0000, 0, 61, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 06:25:23');
+(1, 'winning-sequence', 'hard', '[null,\"X\",\"X\",null,\"X\",null,null,null,null]', '[]', '[1,2,4]', NULL, 0, 'placement', 'placement', 'center-focused', 'offensive', 6, 0, 100.00, 6, NULL, 26.6667, 10, 78, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(2, 'defensive-block', 'hard', '[\"O\",\"X\",\"X\",null,\"X\",null,null,null,null]', '[0]', '[1,2,4]', NULL, 7, 'placement', 'placement', 'center-focused', 'defensive', 10, 0, 100.00, 10, 8.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(3, 'defensive-block', 'hard', '[\"O\",\"X\",\"X\",null,\"X\",null,null,\"O\",null]', '[0,7]', '[1,2,4]', NULL, 6, 'placement', 'placement', 'center-focused', 'defensive', 8, 0, 100.00, 8, 12.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(4, 'tactical-move', 'hard', '[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null]', '[0,6,7]', '[1,3,4]', 0, 8, 'movement', 'movement', 'center-focused', 'defensive', 10, 0, 100.00, 10, 12.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(5, 'winning-sequence', 'hard', '[null,null,null,null,\"X\",null,\"X\",\"X\",null]', '[]', '[4,6,7]', NULL, 8, 'placement', 'placement', 'center-focused', 'offensive', 2, 0, 100.00, 2, 8.00, -220.0000, 10, 30, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(6, 'defensive-block', 'hard', '[null,null,null,null,\"X\",null,\"X\",\"X\",\"O\"]', '[8]', '[4,6,7]', NULL, 1, 'placement', 'placement', 'center-focused', 'defensive', 4, 0, 100.00, 4, 8.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(7, 'defensive-block', 'hard', '[null,\"O\",null,null,\"X\",null,\"X\",\"X\",\"O\"]', '[1,8]', '[4,6,7]', NULL, 2, 'placement', 'placement', 'center-focused', 'defensive', 6, 0, 100.00, 6, 10.00, -80.0000, 10, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(8, 'tactical-move', 'hard', '[\"X\",\"O\",\"O\",null,null,null,\"X\",\"X\",\"O\"]', '[1,2,8]', '[0,6,7]', 1, 5, 'movement', 'movement', 'center-focused', 'defensive', 4, 0, 100.00, 4, 10.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(9, 'tactical-move', 'hard', '[null,null,null,null,\"X\",null,null,null,null]', '[]', '[4]', NULL, 0, 'placement', 'placement', 'center-focused', 'balanced', 17, 0, 100.00, 17, 12.00, -10.0000, 4, 67, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(10, 'tactical-move', 'hard', '[\"O\",null,null,null,\"X\",null,null,null,\"X\"]', '[0]', '[4,8]', NULL, 2, 'placement', 'placement', 'center-focused', 'balanced', 4, 0, 100.00, 4, 26.00, 10.0000, 7, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(11, 'defensive-block', 'hard', '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '[0,2,7]', '[1,4,5]', 0, 3, 'movement', 'movement', 'center-focused', 'defensive', 8, 0, 100.00, 8, 26.00, -60.0000, 6, 52, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(12, 'defensive-block', 'hard', '[null,\"X\",\"O\",\"O\",\"X\",null,null,\"O\",\"X\"]', '[2,3,7]', '[1,4,8]', 2, 0, 'movement', 'movement', 'center-focused', 'defensive', 6, 0, 100.00, 6, 12.00, -25.0000, 6, 63, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(13, 'tactical-move', 'hard', '[\"O\",\"X\",null,\"O\",null,null,\"X\",\"O\",\"X\"]', '[0,3,7]', '[1,6,8]', 0, 4, 'movement', 'movement', 'center-focused', 'balanced', 4, 0, 100.00, 4, 54.00, 0.0000, 4, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(14, 'tactical-move', 'hard', '[\"X\",\"X\",null,\"O\",\"O\",null,\"X\",\"O\",null]', '[3,4,7]', '[0,1,6]', 7, 5, 'movement', 'movement', 'center-focused', 'balanced', 6, 0, 100.00, 6, 26.00, -5.0000, 6, 69, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(15, 'tactical-move', 'hard', '[\"X\",null,null,null,null,null,null,null,null]', '[]', '[0]', NULL, 4, 'placement', 'placement', 'balanced', 'balanced', 4, 0, 100.00, 4, 26.00, 0.0000, 3, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(16, 'winning-sequence', 'hard', '[\"O\",null,null,\"X\",\"X\",null,null,null,null]', '[0]', '[3,4]', NULL, 5, 'placement', 'placement', 'center-focused', 'offensive', 7, 0, 100.00, 7, NULL, 20.0000, 6, 76, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(17, 'defensive-block', 'hard', '[\"O\",\"O\",null,null,\"X\",\"O\",\"X\",\"X\",null]', '[0,1,5]', '[4,6,7]', 5, 2, 'movement', 'movement', 'center-focused', 'defensive', 18, 0, 100.00, 18, 54.00, -60.0000, 10, 52, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(18, 'defensive-block', 'hard', '[\"O\",\"X\",null,\"X\",\"X\",null,null,\"O\",null]', '[0,7]', '[1,3,4]', NULL, 5, 'placement', 'placement', 'center-focused', 'defensive', 4, 0, 100.00, 4, 12.00, -80.0000, 7, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(19, 'tactical-move', 'hard', '[null,\"X\",null,\"X\",\"O\",\"O\",null,\"O\",\"X\"]', '[4,5,7]', '[1,3,8]', 5, 2, 'movement', 'movement', 'center-focused', 'balanced', 8, 0, 100.00, 8, 26.00, 10.0000, 2, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(20, 'tactical-move', 'hard', '[\"O\",\"X\",null,null,\"O\",null,\"X\",\"O\",\"X\"]', '[0,4,7]', '[1,6,8]', 0, 3, 'movement', 'movement', 'center-focused', 'balanced', 21, 0, 100.00, 21, 12.00, 0.0000, 3, 70, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(21, 'tactical-move', 'hard', '[null,\"X\",\"O\",null,\"O\",\"X\",\"X\",\"O\",null]', '[2,4,7]', '[1,5,6]', 2, 0, 'movement', 'movement', 'center-focused', 'balanced', 8, 0, 100.00, 8, 54.00, 10.0000, 1, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(22, 'winning-sequence', 'hard', '[\"O\",null,null,null,\"X\",null,\"X\",null,null]', '[0]', '[4,6]', NULL, 2, 'placement', 'placement', 'center-focused', 'offensive', 4, 0, 100.00, 4, NULL, 17.6000, 7, 75, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(23, 'tactical-move', 'hard', '[\"O\",null,\"O\",null,\"X\",\"X\",\"X\",\"O\",null]', '[0,2,7]', '[4,5,6]', 7, 1, 'movement', 'movement', 'center-focused', 'defensive', 6, 0, 100.00, 6, 12.00, -80.0000, 6, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(24, 'winning-sequence', 'hard', '[\"O\",\"X\",null,null,\"X\",null,null,null,null]', '[0]', '[1,4]', NULL, 7, 'placement', 'placement', 'center-focused', 'offensive', 4, 0, 100.00, 4, NULL, 18.6667, 6, 76, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(25, 'defensive-block', 'hard', '[\"X\",null,null,null,\"O\",null,\"X\",null,null]', '[4]', '[0,6]', NULL, 3, 'placement', 'placement', 'corner-strategy', 'defensive', 2, 0, 100.00, 2, 26.00, -60.0000, 6, 52, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(26, 'winning-sequence', 'hard', '[\"O\",null,null,\"X\",\"X\",\"O\",null,\"X\",null]', '[0,5]', '[3,4,7]', NULL, 1, 'placement', 'placement', 'center-focused', 'offensive', 2, 0, 100.00, 2, 12.00, -80.0000, 8, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(27, 'defensive-block', 'hard', '[\"O\",\"O\",\"X\",null,\"X\",\"O\",null,\"X\",null]', '[0,1,5]', '[2,4,7]', 0, 6, 'movement', 'movement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 12.00, -80.0000, 7, 46, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(28, 'tactical-move', 'hard', '[\"X\",null,\"X\",null,\"X\",\"O\",\"O\",null,\"O\"]', '[5,6,8]', '[0,2,4]', 5, 7, 'movement', 'movement', 'center-focused', 'defensive', 2, 0, 100.00, 2, 12.00, -25.0000, 9, 63, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(29, 'opening-move', 'hard', '[null,null,null,null,\"O\",null,null,null,null]', '[4]', '[]', NULL, 4, 'placement', 'placement', 'unknown', 'offensive', 2, 0, 100.00, 2, NULL, 10.0000, 0, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(30, 'high-value-position', 'hard', '[null,\"O\",null,null,null,null,null,null,null]', '[1]', '[]', NULL, 1, 'placement', 'placement', 'balanced', 'balanced', 2, 0, 100.00, 2, NULL, 10.0455, 0, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(31, 'high-value-position', 'hard', '[null,null,null,null,null,null,\"O\",null,null]', '[6]', '[]', NULL, 6, 'placement', 'placement', 'balanced', 'balanced', 2, 0, 100.00, 2, NULL, 13.2222, 0, 74, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(32, 'high-value-position', 'hard', '[null,null,null,null,null,null,null,null,\"O\"]', '[8]', '[]', NULL, 8, 'placement', 'placement', 'balanced', 'balanced', 2, 0, 100.00, 2, NULL, 11.0000, 0, 73, NULL, '2025-12-27 06:25:23', '2025-12-27 06:25:23', '2025-12-27 09:27:09'),
+(33, 'defensive-block', 'hard', '[\"O\",\"X\",\"X\",null,null,\"O\",\"X\",null,null]', '[0,5]', '[1,2,6]', NULL, 4, 'placement', 'placement', 'corner-strategy', 'defensive', 1, 0, 0.00, 1, 8.00, -70.0000, 8, 40, NULL, '2025-12-27 09:27:09', '2025-12-27 09:27:09', '2025-12-27 09:27:09'),
+(34, 'winning-sequence', 'medium', '[null,null,null,\"X\",\"X\",null,null,\"X\",null]', '[]', '[3,4,7]', NULL, 2, 'placement', 'placement', 'center-focused', 'offensive', 1, 0, 0.00, 1, 8.00, -150.0000, 10, 40, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(35, 'defensive-block', 'medium', '[null,null,\"O\",\"X\",\"X\",null,null,\"X\",null]', '[2]', '[3,4,7]', NULL, 5, 'placement', 'placement', 'center-focused', 'defensive', 1, 0, 0.00, 1, 8.00, -150.0000, 10, 40, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(36, 'defensive-block', 'medium', '[null,null,\"O\",\"X\",\"X\",\"O\",null,\"X\",null]', '[2,5]', '[3,4,7]', NULL, 1, 'placement', 'placement', 'center-focused', 'defensive', 1, 0, 0.00, 1, 8.00, -25.0000, 9, 40, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(37, 'defensive-block', 'medium', '[\"X\",\"O\",\"O\",null,\"X\",\"O\",null,\"X\",null]', '[1,2,5]', '[0,4,7]', 1, 8, 'movement', 'movement', 'center-focused', 'defensive', 1, 0, 0.00, 1, 8.00, -25.0000, 8, 40, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(38, 'tactical-move', 'medium', '[null,\"X\",null,null,null,null,null,null,null]', '[]', '[1]', NULL, 8, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, 6.00, 0.0000, 2, 50, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(39, 'tactical-move', 'medium', '[null,\"X\",\"X\",null,null,null,null,null,\"O\"]', '[8]', '[1,2]', NULL, 4, 'placement', 'placement', 'corner-strategy', 'defensive', 1, 0, 0.00, 1, 6.00, -70.0000, 6, 40, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(40, 'defensive-block', 'medium', '[null,\"X\",\"X\",null,\"O\",null,\"X\",null,\"O\"]', '[4,8]', '[1,2,6]', NULL, 0, 'placement', 'placement', 'corner-strategy', 'defensive', 1, 0, 0.00, 1, 6.00, -5.0000, 7, 45, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(41, 'high-value-position', 'medium', '[\"O\",null,null,null,null,null,null,null,null]', '[0]', '[]', NULL, 0, 'placement', 'placement', 'balanced', 'offensive', 1, 0, 0.00, 1, NULL, 16.5000, 0, 67, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(42, 'high-value-position', 'medium', '[null,\"O\",null,null,null,null,null,null,null]', '[1]', '[]', NULL, 1, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 11.0000, 0, 61, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(43, 'high-value-position', 'medium', '[null,null,\"O\",null,null,null,null,null,null]', '[2]', '[]', NULL, 2, 'placement', 'placement', 'balanced', 'balanced', 1, 0, 0.00, 1, NULL, 11.0000, 0, 61, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(44, 'high-value-position', 'medium', '[null,null,null,null,\"O\",null,null,null,null]', '[4]', '[]', NULL, 4, 'placement', 'placement', 'balanced', 'offensive', 1, 0, 0.00, 1, NULL, 11.0000, 0, 61, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(45, 'high-value-position', 'medium', '[null,null,null,null,null,\"O\",null,null,null]', '[5]', '[]', NULL, 5, 'placement', 'placement', 'balanced', 'offensive', 1, 0, 0.00, 1, NULL, 16.5000, 0, 67, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47'),
+(46, 'high-value-position', 'medium', '[null,null,null,null,null,null,null,null,\"O\"]', '[8]', '[]', NULL, 8, 'placement', 'placement', 'balanced', 'offensive', 1, 0, 0.00, 1, NULL, 16.5000, 0, 67, NULL, '2025-12-27 09:29:47', '2025-12-27 09:29:47', '2025-12-27 09:29:47');
 
 -- --------------------------------------------------------
 
@@ -231,7 +247,20 @@ INSERT INTO `ai_training_data` (`id`, `session_id`, `game_outcome`, `difficulty_
 (33, NULL, 'ai_win', 'hard', 0, NULL, '[5.00909090909091,2.08,3.733333333333333,1.4666666666666668,1.5999999999999999,3.6399999999999997,2.8,3.733333333333333,2.2]', '[{\"positions\":[0,6,5],\"session_id\":2,\"total_moves\":12},{\"positions\":[0,5,1],\"session_id\":7,\"total_moves\":12},{\"positions\":[4,3,2],\"session_id\":8,\"total_moves\":26},{\"positions\":[0,7,6],\"session_id\":13,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":14,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":24,\"total_moves\":10},{\"positions\":[0,7,5],\"session_id\":25,\"total_moves\":54},{\"positions\":[0,5,1],\"session_id\":26,\"total_moves\":8},{\"positions\":[4,6,2],\"session_id\":29,\"total_moves\":6},{\"positions\":[0,2,7],\"session_id\":30,\"total_moves\":14},{\"positions\":[8,1,2],\"session_id\":34,\"total_moves\":8},{\"positions\":[0,7,6],\"session_id\":35,\"total_moves\":8}]', '[{\"moves\":[{\"from\":0,\"to\":1},{\"from\":1,\"to\":8},{\"from\":5,\"to\":7}],\"session_id\":2},{\"moves\":[{\"from\":0,\"to\":6},{\"from\":1,\"to\":3},{\"from\":5,\"to\":0}],\"session_id\":7},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":8,\"to\":5}],\"session_id\":8},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":7,\"to\":5}],\"session_id\":25},{\"moves\":[{\"from\":2,\"to\":0},{\"from\":0,\"to\":4},{\"from\":7,\"to\":5}],\"session_id\":30}]', 25, 48.00, 13.56, NULL, NULL, '2025-12-27 05:27:04'),
 (34, NULL, 'ai_win', 'medium', 0, NULL, '[3.3000000000000003,2.2,2.2,1,2.2,3.3000000000000003,1,1,3.3000000000000003]', '[{\"positions\":[8,4,0],\"session_id\":27,\"total_moves\":6},{\"positions\":[2,5,1],\"session_id\":37,\"total_moves\":8}]', '[]', 4, 50.00, 7.00, NULL, NULL, '2025-12-27 05:27:11'),
 (35, NULL, 'ai_win', 'easy', 0, NULL, '[1,1,1,1,1,1,1,1,1]', '[]', '[]', 2, 0.00, 5.00, NULL, NULL, '2025-12-27 05:27:14'),
-(36, NULL, 'ai_win', 'hard', 0, NULL, '[5.00909090909091,2.08,3.733333333333333,1.4666666666666668,1.5999999999999999,3.6399999999999997,2.8,3.733333333333333,2.2]', '[{\"positions\":[0,6,5],\"session_id\":2,\"total_moves\":12},{\"positions\":[0,5,1],\"session_id\":7,\"total_moves\":12},{\"positions\":[4,3,2],\"session_id\":8,\"total_moves\":26},{\"positions\":[0,7,6],\"session_id\":13,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":14,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":24,\"total_moves\":10},{\"positions\":[0,7,5],\"session_id\":25,\"total_moves\":54},{\"positions\":[0,5,1],\"session_id\":26,\"total_moves\":8},{\"positions\":[4,6,2],\"session_id\":29,\"total_moves\":6},{\"positions\":[0,2,7],\"session_id\":30,\"total_moves\":14},{\"positions\":[8,1,2],\"session_id\":34,\"total_moves\":8},{\"positions\":[0,7,6],\"session_id\":35,\"total_moves\":8}]', '[{\"moves\":[{\"from\":0,\"to\":1},{\"from\":1,\"to\":8},{\"from\":5,\"to\":7}],\"session_id\":2},{\"moves\":[{\"from\":0,\"to\":6},{\"from\":1,\"to\":3},{\"from\":5,\"to\":0}],\"session_id\":7},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":8,\"to\":5}],\"session_id\":8},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":7,\"to\":5}],\"session_id\":25},{\"moves\":[{\"from\":2,\"to\":0},{\"from\":0,\"to\":4},{\"from\":7,\"to\":5}],\"session_id\":30}]', 26, 50.00, 13.04, NULL, NULL, '2025-12-27 06:25:23');
+(36, NULL, 'ai_win', 'hard', 0, NULL, '[5.00909090909091,2.08,3.733333333333333,1.4666666666666668,1.5999999999999999,3.6399999999999997,2.8,3.733333333333333,2.2]', '[{\"positions\":[0,6,5],\"session_id\":2,\"total_moves\":12},{\"positions\":[0,5,1],\"session_id\":7,\"total_moves\":12},{\"positions\":[4,3,2],\"session_id\":8,\"total_moves\":26},{\"positions\":[0,7,6],\"session_id\":13,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":14,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":24,\"total_moves\":10},{\"positions\":[0,7,5],\"session_id\":25,\"total_moves\":54},{\"positions\":[0,5,1],\"session_id\":26,\"total_moves\":8},{\"positions\":[4,6,2],\"session_id\":29,\"total_moves\":6},{\"positions\":[0,2,7],\"session_id\":30,\"total_moves\":14},{\"positions\":[8,1,2],\"session_id\":34,\"total_moves\":8},{\"positions\":[0,7,6],\"session_id\":35,\"total_moves\":8}]', '[{\"moves\":[{\"from\":0,\"to\":1},{\"from\":1,\"to\":8},{\"from\":5,\"to\":7}],\"session_id\":2},{\"moves\":[{\"from\":0,\"to\":6},{\"from\":1,\"to\":3},{\"from\":5,\"to\":0}],\"session_id\":7},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":8,\"to\":5}],\"session_id\":8},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":7,\"to\":5}],\"session_id\":25},{\"moves\":[{\"from\":2,\"to\":0},{\"from\":0,\"to\":4},{\"from\":7,\"to\":5}],\"session_id\":30}]', 26, 50.00, 13.04, NULL, NULL, '2025-12-27 06:25:23'),
+(37, 40, 'player_win', 'hard', 15, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3502, 1310, '2025-12-27 06:52:07'),
+(38, 46, 'player_win', 'hard', 9, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3532, 1335, '2025-12-27 07:20:15'),
+(39, 47, 'player_win', 'hard', 9, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3546, 1360, '2025-12-27 08:00:09'),
+(40, 49, 'player_win', 'hard', 20, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3412, 1025, '2025-12-27 09:05:50'),
+(41, 50, 'player_win', 'hard', 13, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3541, 1050, '2025-12-27 09:09:37'),
+(42, 51, 'player_win', 'hard', 17, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3414, 1075, '2025-12-27 09:14:29'),
+(43, 53, 'ai_win', 'hard', 8, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3530, 1065, '2025-12-27 09:20:09'),
+(44, 55, 'player_win', 'hard', 12, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3491, 1090, '2025-12-27 09:23:45'),
+(45, NULL, 'ai_win', 'hard', 0, NULL, '[5.333333333333334,2.0090909090909093,3.5200000000000005,1.4666666666666668,1.9000000000000001,4,2.6444444444444444,3.733333333333333,2.2]', '[{\"positions\":[0,6,5],\"session_id\":2,\"total_moves\":12},{\"positions\":[0,5,1],\"session_id\":7,\"total_moves\":12},{\"positions\":[4,3,2],\"session_id\":8,\"total_moves\":26},{\"positions\":[0,7,6],\"session_id\":13,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":14,\"total_moves\":8},{\"positions\":[0,2,7],\"session_id\":24,\"total_moves\":10},{\"positions\":[0,7,5],\"session_id\":25,\"total_moves\":54},{\"positions\":[0,5,1],\"session_id\":26,\"total_moves\":8},{\"positions\":[4,6,2],\"session_id\":29,\"total_moves\":6},{\"positions\":[0,2,7],\"session_id\":30,\"total_moves\":14},{\"positions\":[8,1,2],\"session_id\":34,\"total_moves\":8},{\"positions\":[0,7,6],\"session_id\":35,\"total_moves\":8},{\"positions\":[0,5,4],\"session_id\":53,\"total_moves\":8}]', '[{\"moves\":[{\"from\":0,\"to\":1},{\"from\":1,\"to\":8},{\"from\":5,\"to\":7}],\"session_id\":2},{\"moves\":[{\"from\":0,\"to\":6},{\"from\":1,\"to\":3},{\"from\":5,\"to\":0}],\"session_id\":7},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":8,\"to\":5}],\"session_id\":8},{\"moves\":[{\"from\":3,\"to\":2},{\"from\":2,\"to\":3},{\"from\":7,\"to\":5}],\"session_id\":25},{\"moves\":[{\"from\":2,\"to\":0},{\"from\":0,\"to\":4},{\"from\":7,\"to\":5}],\"session_id\":30}]', 35, 42.86, 12.63, NULL, NULL, '2025-12-27 09:27:09'),
+(46, 56, 'player_win', 'hard', 12, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3407, 1115, '2025-12-27 09:27:56'),
+(47, NULL, 'ai_win', 'medium', 0, NULL, '[3.3000000000000003,2.2,2.2,1,2.2,3.3000000000000003,1,1,3.3000000000000003]', '[{\"positions\":[8,4,0],\"session_id\":27,\"total_moves\":6},{\"positions\":[2,5,1],\"session_id\":37,\"total_moves\":8}]', '[]', 5, 60.00, 5.60, NULL, NULL, '2025-12-27 09:29:47'),
+(48, NULL, 'ai_win', 'easy', 0, NULL, '[1,1,1,1,1,1,1,1,1]', '[]', '[]', 3, 33.33, 3.33, NULL, NULL, '2025-12-27 09:29:55'),
+(49, 63, 'player_win', 'hard', 9, NULL, NULL, NULL, NULL, 0, 0.00, 0.00, -3442, 1140, '2025-12-27 11:38:51');
 
 -- --------------------------------------------------------
 
@@ -271,6 +300,47 @@ CREATE TABLE `game_challenges` (
   `responded_at` timestamp NULL DEFAULT NULL,
   `expires_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `game_challenges`
+--
+
+INSERT INTO `game_challenges` (`id`, `challenger_id`, `challenged_id`, `status`, `session_id`, `created_at`, `responded_at`, `expires_at`) VALUES
+(1, 1, 6, 'expired', NULL, '2025-12-27 10:46:05', NULL, '2025-12-27 09:48:05'),
+(2, 1, 5, 'expired', NULL, '2025-12-27 10:54:17', NULL, '2025-12-27 09:56:17'),
+(3, 1, 5, 'accepted', 59, '2025-12-27 10:56:46', '2025-12-27 10:56:53', '2025-12-27 09:58:46'),
+(4, 5, 1, 'rejected', NULL, '2025-12-27 11:20:10', '2025-12-27 11:20:45', '2025-12-27 10:22:10'),
+(5, 1, 5, 'rejected', NULL, '2025-12-27 11:20:52', '2025-12-27 11:20:58', '2025-12-27 10:22:52'),
+(6, 5, 1, 'accepted', 60, '2025-12-27 11:22:26', '2025-12-27 11:22:34', '2025-12-27 10:24:26'),
+(7, 1, 5, 'accepted', 62, '2025-12-27 11:26:29', '2025-12-27 11:27:07', '2025-12-27 10:28:29'),
+(8, 6, 1, 'rejected', NULL, '2025-12-27 11:34:58', '2025-12-27 11:35:37', '2025-12-27 10:36:58'),
+(9, 1, 6, 'accepted', 64, '2025-12-27 11:38:32', '2025-12-27 11:39:22', '2025-12-27 10:40:32'),
+(10, 6, 1, 'pending', NULL, '2025-12-27 11:44:36', NULL, '2025-12-27 10:46:36'),
+(11, 6, 5, 'pending', NULL, '2025-12-27 12:03:54', NULL, '2025-12-27 11:05:54');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `game_chat_messages`
+--
+
+CREATE TABLE `game_chat_messages` (
+  `id` int(11) NOT NULL,
+  `session_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `game_chat_messages`
+--
+
+INSERT INTO `game_chat_messages` (`id`, `session_id`, `user_id`, `message`, `created_at`) VALUES
+(1, 64, 1, 'nwankwo', '2025-12-27 11:40:00'),
+(2, 64, 1, 'Play na', '2025-12-27 11:42:20'),
+(3, 64, 6, 'Guy this thing dey miss behave', '2025-12-27 11:43:34'),
+(4, 64, 1, 'Don\'t worry I go fix am make we pauce am first', '2025-12-27 11:46:16');
 
 -- --------------------------------------------------------
 
@@ -770,7 +840,177 @@ INSERT INTO `game_moves` (`id`, `session_id`, `move_number`, `player`, `move_typ
 (470, 39, 3, 'X', 'placement', NULL, 1, '[null,null,null,null,\"X\",null,null,null,\"X\"]', '[null,\"X\",null,null,\"X\",null,null,null,\"X\"]', '2025-12-27 03:40:32', 0),
 (471, 39, 4, 'O', 'placement', NULL, 7, '[null,\"X\",null,null,\"X\",null,null,null,\"X\"]', '[null,\"X\",null,null,\"X\",null,null,\"O\",\"X\"]', '2025-12-27 03:40:33', 0),
 (472, 39, 5, 'O', 'placement', NULL, 0, '[null,\"X\",null,null,\"X\",null,null,\"O\",\"X\"]', '[\"O\",\"X\",null,null,\"X\",null,null,\"O\",\"X\"]', '2025-12-27 03:40:33', 0),
-(473, 39, 6, 'O', 'placement', NULL, 2, '[\"O\",\"X\",null,null,\"X\",null,null,\"O\",\"X\"]', '[\"O\",\"X\",\"O\",null,\"X\",null,null,\"O\",\"X\"]', '2025-12-27 03:40:34', 0);
+(473, 39, 6, 'O', 'placement', NULL, 2, '[\"O\",\"X\",null,null,\"X\",null,null,\"O\",\"X\"]', '[\"O\",\"X\",\"O\",null,\"X\",null,null,\"O\",\"X\"]', '2025-12-27 03:40:34', 0),
+(474, 40, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 06:50:32', 0),
+(475, 40, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 06:50:33', 0),
+(476, 40, 3, 'X', 'placement', NULL, 1, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",\"X\",null,null,\"X\",null,null,null,null]', '2025-12-27 06:50:41', 0),
+(477, 40, 4, 'O', 'placement', NULL, 7, '[\"O\",\"X\",null,null,\"X\",null,null,null,null]', '[\"O\",\"X\",null,null,\"X\",null,null,\"O\",null]', '2025-12-27 06:50:42', 0),
+(478, 40, 5, 'X', 'placement', NULL, 6, '[\"O\",\"X\",null,null,\"X\",null,null,\"O\",null]', '[\"O\",\"X\",null,null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 06:50:46', 0),
+(479, 40, 6, 'O', 'placement', NULL, 2, '[\"O\",\"X\",null,null,\"X\",null,\"X\",\"O\",null]', '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 06:50:48', 0),
+(480, 40, 7, 'X', 'movement', 6, 3, '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '[\"O\",\"X\",\"O\",\"X\",\"X\",null,null,\"O\",null]', '2025-12-27 06:51:24', 1905),
+(481, 40, 8, 'O', 'movement', 0, 5, '[\"O\",\"X\",\"O\",\"X\",\"X\",null,null,\"O\",null]', '[null,\"X\",\"O\",\"X\",\"X\",\"O\",null,\"O\",null]', '2025-12-27 06:51:25', 921),
+(482, 40, 9, 'X', 'movement', 1, 8, '[null,\"X\",\"O\",\"X\",\"X\",\"O\",null,\"O\",null]', '[null,null,\"O\",\"X\",\"X\",\"O\",null,\"O\",\"X\"]', '2025-12-27 06:51:35', 2258),
+(483, 40, 10, 'O', 'movement', 2, 0, '[null,null,\"O\",\"X\",\"X\",\"O\",null,\"O\",\"X\"]', '[\"O\",null,null,\"X\",\"X\",\"O\",null,\"O\",\"X\"]', '2025-12-27 06:51:37', 1242),
+(484, 40, 11, 'X', 'movement', 8, 6, '[\"O\",null,null,\"X\",\"X\",\"O\",null,\"O\",\"X\"]', '[\"O\",null,null,\"X\",\"X\",\"O\",\"X\",\"O\",null]', '2025-12-27 06:51:48', 3640),
+(485, 40, 12, 'O', 'movement', 0, 2, '[\"O\",null,null,\"X\",\"X\",\"O\",\"X\",\"O\",null]', '[null,null,\"O\",\"X\",\"X\",\"O\",\"X\",\"O\",null]', '2025-12-27 06:51:49', 1636),
+(486, 40, 13, 'X', 'movement', 3, 8, '[null,null,\"O\",\"X\",\"X\",\"O\",\"X\",\"O\",null]', '[null,null,\"O\",null,\"X\",\"O\",\"X\",\"O\",\"X\"]', '2025-12-27 06:51:58', 2470),
+(487, 40, 14, 'O', 'movement', 2, 0, '[null,null,\"O\",null,\"X\",\"O\",\"X\",\"O\",\"X\"]', '[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"]', '2025-12-27 06:52:00', 1767),
+(488, 40, 15, 'X', 'movement', 8, 2, '[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"]', '[\"O\",null,\"X\",null,\"X\",\"O\",\"X\",\"O\",null]', '2025-12-27 06:52:07', 2790),
+(489, 46, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 07:19:23', 0),
+(490, 46, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 07:19:24', 0),
+(491, 46, 3, 'X', 'placement', NULL, 2, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",null,\"X\",null,\"X\",null,null,null,null]', '2025-12-27 07:19:36', 0),
+(492, 46, 4, 'O', 'placement', NULL, 6, '[\"O\",null,\"X\",null,\"X\",null,null,null,null]', '[\"O\",null,\"X\",null,\"X\",null,\"O\",null,null]', '2025-12-27 07:19:38', 0),
+(493, 46, 5, 'X', 'placement', NULL, 3, '[\"O\",null,\"X\",null,\"X\",null,\"O\",null,null]', '[\"O\",null,\"X\",\"X\",\"X\",null,\"O\",null,null]', '2025-12-27 07:19:51', 0),
+(494, 46, 6, 'O', 'placement', NULL, 5, '[\"O\",null,\"X\",\"X\",\"X\",null,\"O\",null,null]', '[\"O\",null,\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '2025-12-27 07:19:53', 0),
+(495, 46, 7, 'X', 'movement', 2, 1, '[\"O\",null,\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '[\"O\",\"X\",null,\"X\",\"X\",\"O\",\"O\",null,null]', '2025-12-27 07:20:05', 1520),
+(496, 46, 8, 'O', 'movement', 5, 7, '[\"O\",\"X\",null,\"X\",\"X\",\"O\",\"O\",null,null]', '[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null]', '2025-12-27 07:20:07', 3681),
+(497, 46, 9, 'X', 'movement', 1, 5, '[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null]', '[\"O\",null,null,\"X\",\"X\",\"X\",\"O\",\"O\",null]', '2025-12-27 07:20:14', 1845),
+(498, 47, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 07:59:24', 0),
+(499, 47, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 07:59:26', 0),
+(500, 47, 3, 'X', 'placement', NULL, 3, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,\"X\",\"X\",null,null,null,null]', '2025-12-27 07:59:36', 0),
+(501, 47, 4, 'O', 'placement', NULL, 5, '[\"O\",null,null,\"X\",\"X\",null,null,null,null]', '[\"O\",null,null,\"X\",\"X\",\"O\",null,null,null]', '2025-12-27 07:59:38', 0),
+(502, 47, 5, 'X', 'placement', NULL, 2, '[\"O\",null,null,\"X\",\"X\",\"O\",null,null,null]', '[\"O\",null,\"X\",\"X\",\"X\",\"O\",null,null,null]', '2025-12-27 07:59:46', 0),
+(503, 47, 6, 'O', 'placement', NULL, 6, '[\"O\",null,\"X\",\"X\",\"X\",\"O\",null,null,null]', '[\"O\",null,\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '2025-12-27 07:59:48', 0),
+(504, 47, 7, 'X', 'movement', 2, 1, '[\"O\",null,\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '[\"O\",\"X\",null,\"X\",\"X\",\"O\",\"O\",null,null]', '2025-12-27 08:00:01', 1151),
+(505, 47, 8, 'O', 'movement', 5, 7, '[\"O\",\"X\",null,\"X\",\"X\",\"O\",\"O\",null,null]', '[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null]', '2025-12-27 08:00:03', 4688),
+(506, 47, 9, 'X', 'movement', 1, 5, '[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null]', '[\"O\",null,null,\"X\",\"X\",\"X\",\"O\",\"O\",null]', '2025-12-27 08:00:08', 809),
+(507, 48, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:01:53', 0),
+(508, 48, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:01:54', 0),
+(509, 49, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:02:48', 0),
+(510, 49, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:02:49', 0),
+(511, 49, 3, 'X', 'placement', NULL, 5, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '2025-12-27 09:02:59', 0),
+(512, 49, 4, 'O', 'placement', NULL, 3, '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '2025-12-27 09:03:01', 0),
+(513, 49, 5, 'X', 'placement', NULL, 6, '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 09:03:04', 0),
+(514, 49, 6, 'O', 'placement', NULL, 2, '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 09:03:05', 0),
+(515, 49, 7, 'X', 'movement', 5, 1, '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '2025-12-27 09:03:17', 1100),
+(516, 49, 8, 'O', 'movement', 3, 7, '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 09:03:18', 3148),
+(517, 49, 9, 'X', 'movement', 6, 3, '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '[\"O\",\"X\",\"O\",\"X\",\"X\",null,null,\"O\",null]', '2025-12-27 09:03:34', 1130),
+(518, 49, 10, 'O', 'movement', 2, 5, '[\"O\",\"X\",\"O\",\"X\",\"X\",null,null,\"O\",null]', '[\"O\",\"X\",null,\"X\",\"X\",\"O\",null,\"O\",null]', '2025-12-27 09:03:35', 3417),
+(519, 49, 11, 'X', 'movement', 1, 8, '[\"O\",\"X\",null,\"X\",\"X\",\"O\",null,\"O\",null]', '[\"O\",null,null,\"X\",\"X\",\"O\",null,\"O\",\"X\"]', '2025-12-27 09:04:09', 1311),
+(520, 49, 12, 'O', 'movement', 5, 2, '[\"O\",null,null,\"X\",\"X\",\"O\",null,\"O\",\"X\"]', '[\"O\",null,\"O\",\"X\",\"X\",null,null,\"O\",\"X\"]', '2025-12-27 09:04:10', 4051),
+(521, 49, 13, 'X', 'movement', 3, 1, '[\"O\",null,\"O\",\"X\",\"X\",null,null,\"O\",\"X\"]', '[\"O\",\"X\",\"O\",null,\"X\",null,null,\"O\",\"X\"]', '2025-12-27 09:04:16', 1312),
+(522, 49, 14, 'O', 'movement', 2, 5, '[\"O\",\"X\",\"O\",null,\"X\",null,null,\"O\",\"X\"]', '[\"O\",\"X\",null,null,\"X\",\"O\",null,\"O\",\"X\"]', '2025-12-27 09:04:17', 3649),
+(523, 49, 15, 'X', 'movement', 1, 6, '[\"O\",\"X\",null,null,\"X\",\"O\",null,\"O\",\"X\"]', '[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"]', '2025-12-27 09:04:27', 1184),
+(524, 49, 16, 'O', 'movement', 5, 2, '[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"]', '[\"O\",null,\"O\",null,\"X\",null,\"X\",\"O\",\"X\"]', '2025-12-27 09:04:31', 4054),
+(525, 49, 17, 'X', 'movement', 8, 1, '[\"O\",null,\"O\",null,\"X\",null,\"X\",\"O\",\"X\"]', '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 09:04:43', 1590),
+(526, 49, 18, 'O', 'movement', 2, 5, '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '[\"O\",\"X\",null,null,\"X\",\"O\",\"X\",\"O\",null]', '2025-12-27 09:04:44', 1813),
+(527, 49, 19, 'X', 'movement', 1, 2, '[\"O\",\"X\",null,null,\"X\",\"O\",\"X\",\"O\",null]', '[\"O\",null,\"X\",null,\"X\",\"O\",\"X\",\"O\",null]', '2025-12-27 09:05:16', 2621),
+(528, 49, 20, 'X', 'movement', 2, 8, '[\"O\",null,\"X\",null,\"X\",\"O\",\"X\",\"O\",null]', '[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"]', '2025-12-27 09:05:16', 14255),
+(529, 50, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:08:47', 0),
+(530, 50, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:08:48', 0),
+(531, 50, 3, 'X', 'placement', NULL, 5, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '2025-12-27 09:08:52', 0),
+(532, 50, 4, 'O', 'placement', NULL, 3, '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '2025-12-27 09:08:53', 0),
+(533, 50, 5, 'X', 'placement', NULL, 6, '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 09:08:56', 0),
+(534, 50, 6, 'O', 'placement', NULL, 2, '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 09:08:57', 0),
+(535, 50, 7, 'X', 'movement', 5, 1, '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '2025-12-27 09:09:03', 1478),
+(536, 50, 8, 'O', 'movement', 3, 7, '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 09:09:04', 3883),
+(537, 50, 9, 'X', 'movement', 6, 3, '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '[\"O\",\"X\",\"O\",\"X\",\"X\",null,null,\"O\",null]', '2025-12-27 09:09:17', 1197),
+(538, 50, 10, 'O', 'movement', 2, 5, '[\"O\",\"X\",\"O\",\"X\",\"X\",null,null,\"O\",null]', '[\"O\",\"X\",null,\"X\",\"X\",\"O\",null,\"O\",null]', '2025-12-27 09:09:18', 2623),
+(539, 50, 11, 'X', 'movement', 3, 2, '[\"O\",\"X\",null,\"X\",\"X\",\"O\",null,\"O\",null]', '[\"O\",\"X\",\"X\",null,\"X\",\"O\",null,\"O\",null]', '2025-12-27 09:09:28', 1356),
+(540, 50, 12, 'O', 'movement', 7, 6, '[\"O\",\"X\",\"X\",null,\"X\",\"O\",null,\"O\",null]', '[\"O\",\"X\",\"X\",null,\"X\",\"O\",\"O\",null,null]', '2025-12-27 09:09:29', 3598),
+(541, 50, 13, 'X', 'movement', 2, 7, '[\"O\",\"X\",\"X\",null,\"X\",\"O\",\"O\",null,null]', '[\"O\",\"X\",null,null,\"X\",\"O\",\"O\",\"X\",null]', '2025-12-27 09:09:37', 1213),
+(542, 51, 1, 'X', 'placement', NULL, 7, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,null,null,null,\"X\",null]', '2025-12-27 09:11:41', 0),
+(543, 51, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,null,null,null,\"X\",null]', '[\"O\",null,null,null,null,null,null,\"X\",null]', '2025-12-27 09:11:42', 0),
+(544, 51, 3, 'X', 'placement', NULL, 8, '[\"O\",null,null,null,null,null,null,\"X\",null]', '[\"O\",null,null,null,null,null,null,\"X\",\"X\"]', '2025-12-27 09:11:53', 0),
+(545, 51, 4, 'O', 'placement', NULL, 6, '[\"O\",null,null,null,null,null,null,\"X\",\"X\"]', '[\"O\",null,null,null,null,null,\"O\",\"X\",\"X\"]', '2025-12-27 09:11:54', 0),
+(546, 51, 5, 'X', 'placement', NULL, 3, '[\"O\",null,null,null,null,null,\"O\",\"X\",\"X\"]', '[\"O\",null,null,\"X\",null,null,\"O\",\"X\",\"X\"]', '2025-12-27 09:11:58', 0),
+(547, 51, 6, 'O', 'placement', NULL, 5, '[\"O\",null,null,\"X\",null,null,\"O\",\"X\",\"X\"]', '[\"O\",null,null,\"X\",null,\"O\",\"O\",\"X\",\"X\"]', '2025-12-27 09:12:00', 0),
+(548, 51, 7, 'X', 'movement', 8, 4, '[\"O\",null,null,\"X\",null,\"O\",\"O\",\"X\",\"X\"]', '[\"O\",null,null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '2025-12-27 09:12:25', 1150),
+(549, 51, 8, 'O', 'movement', 0, 1, '[\"O\",null,null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '[null,\"O\",null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '2025-12-27 09:12:27', 4210),
+(550, 51, 9, 'X', 'movement', 3, 2, '[null,\"O\",null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '[null,\"O\",\"X\",null,\"X\",\"O\",\"O\",\"X\",null]', '2025-12-27 09:12:50', 4912),
+(551, 51, 10, 'O', 'movement', 1, 0, '[null,\"O\",\"X\",null,\"X\",\"O\",\"O\",\"X\",null]', '[\"O\",null,\"X\",null,\"X\",\"O\",\"O\",\"X\",null]', '2025-12-27 09:12:52', 3451),
+(552, 51, 11, 'X', 'movement', 2, 3, '[\"O\",null,\"X\",null,\"X\",\"O\",\"O\",\"X\",null]', '[\"O\",null,null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '2025-12-27 09:13:24', 1427),
+(553, 51, 12, 'O', 'movement', 0, 1, '[\"O\",null,null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '[null,\"O\",null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '2025-12-27 09:13:25', 9596),
+(554, 51, 13, 'X', 'movement', 7, 2, '[null,\"O\",null,\"X\",\"X\",\"O\",\"O\",\"X\",null]', '[null,\"O\",\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '2025-12-27 09:14:03', 1639),
+(555, 51, 14, 'O', 'movement', 1, 0, '[null,\"O\",\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '[\"O\",null,\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '2025-12-27 09:14:04', 3379),
+(556, 51, 15, 'X', 'movement', 4, 8, '[\"O\",null,\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '[\"O\",null,\"X\",\"X\",null,\"O\",\"O\",null,\"X\"]', '2025-12-27 09:14:23', 3685),
+(557, 51, 16, 'O', 'movement', 5, 7, '[\"O\",null,\"X\",\"X\",null,\"O\",\"O\",null,\"X\"]', '[\"O\",null,\"X\",\"X\",null,null,\"O\",\"O\",\"X\"]', '2025-12-27 09:14:24', 2621),
+(558, 51, 17, 'X', 'movement', 3, 5, '[\"O\",null,\"X\",\"X\",null,null,\"O\",\"O\",\"X\"]', '[\"O\",null,\"X\",null,null,\"X\",\"O\",\"O\",\"X\"]', '2025-12-27 09:14:29', 970),
+(559, 52, 1, 'X', 'placement', NULL, 8, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,null,null,null,null,\"X\"]', '2025-12-27 09:16:39', 0),
+(560, 52, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,null,null,null,null,\"X\"]', '[\"O\",null,null,null,null,null,null,null,\"X\"]', '2025-12-27 09:16:40', 0),
+(561, 52, 3, 'X', 'placement', NULL, 6, '[\"O\",null,null,null,null,null,null,null,\"X\"]', '[\"O\",null,null,null,null,null,\"X\",null,\"X\"]', '2025-12-27 09:16:42', 0),
+(562, 52, 4, 'O', 'placement', NULL, 7, '[\"O\",null,null,null,null,null,\"X\",null,\"X\"]', '[\"O\",null,null,null,null,null,\"X\",\"O\",\"X\"]', '2025-12-27 09:16:43', 0),
+(563, 52, 5, 'X', 'placement', NULL, 3, '[\"O\",null,null,null,null,null,\"X\",\"O\",\"X\"]', '[\"O\",null,null,\"X\",null,null,\"X\",\"O\",\"X\"]', '2025-12-27 09:16:50', 0),
+(564, 52, 6, 'O', 'placement', NULL, 2, '[\"O\",null,null,\"X\",null,null,\"X\",\"O\",\"X\"]', '[\"O\",null,\"O\",\"X\",null,null,\"X\",\"O\",\"X\"]', '2025-12-27 09:16:51', 0),
+(565, 52, 7, 'X', 'movement', 3, 1, '[\"O\",null,\"O\",\"X\",null,null,\"X\",\"O\",\"X\"]', '[\"O\",\"X\",\"O\",null,null,null,\"X\",\"O\",\"X\"]', '2025-12-27 09:16:59', 654),
+(566, 52, 8, 'O', 'movement', 2, 5, '[\"O\",\"X\",\"O\",null,null,null,\"X\",\"O\",\"X\"]', '[\"O\",\"X\",null,null,null,\"O\",\"X\",\"O\",\"X\"]', '2025-12-27 09:17:00', 1936),
+(567, 52, 9, 'X', 'movement', 8, 4, '[\"O\",\"X\",null,null,null,\"O\",\"X\",\"O\",\"X\"]', '[\"O\",\"X\",null,null,\"X\",\"O\",\"X\",\"O\",null]', '2025-12-27 09:17:07', 4457),
+(568, 52, 10, 'O', 'movement', 5, 2, '[\"O\",\"X\",null,null,\"X\",\"O\",\"X\",\"O\",null]', '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 09:17:09', 6248),
+(569, 52, 11, 'X', 'movement', 6, 5, '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '2025-12-27 09:17:20', 3705),
+(570, 52, 12, 'O', 'movement', 0, 3, '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '[null,\"X\",\"O\",\"O\",\"X\",\"X\",null,\"O\",null]', '2025-12-27 09:17:22', 6812),
+(571, 52, 13, 'X', 'movement', 5, 0, '[null,\"X\",\"O\",\"O\",\"X\",\"X\",null,\"O\",null]', '[\"X\",\"X\",\"O\",\"O\",\"X\",null,null,\"O\",null]', '2025-12-27 09:17:28', 2283),
+(572, 52, 14, 'O', 'movement', 2, 5, '[\"X\",\"X\",\"O\",\"O\",\"X\",null,null,\"O\",null]', '[\"X\",\"X\",null,\"O\",\"X\",\"O\",null,\"O\",null]', '2025-12-27 09:17:29', 4209),
+(573, 53, 1, 'X', 'placement', NULL, 2, '[null,null,null,null,null,null,null,null,null]', '[null,null,\"X\",null,null,null,null,null,null]', '2025-12-27 09:19:41', 0);
+INSERT INTO `game_moves` (`id`, `session_id`, `move_number`, `player`, `move_type`, `from_position`, `to_position`, `board_state_before`, `board_state_after`, `timestamp`, `think_time_ms`) VALUES
+(574, 53, 2, 'O', 'placement', NULL, 0, '[null,null,\"X\",null,null,null,null,null,null]', '[\"O\",null,\"X\",null,null,null,null,null,null]', '2025-12-27 09:19:42', 0),
+(575, 53, 3, 'X', 'placement', NULL, 1, '[\"O\",null,\"X\",null,null,null,null,null,null]', '[\"O\",\"X\",\"X\",null,null,null,null,null,null]', '2025-12-27 09:19:44', 0),
+(576, 53, 4, 'O', 'placement', NULL, 5, '[\"O\",\"X\",\"X\",null,null,null,null,null,null]', '[\"O\",\"X\",\"X\",null,null,\"O\",null,null,null]', '2025-12-27 09:19:45', 0),
+(577, 53, 5, 'X', 'placement', NULL, 6, '[\"O\",\"X\",\"X\",null,null,\"O\",null,null,null]', '[\"O\",\"X\",\"X\",null,null,\"O\",\"X\",null,null]', '2025-12-27 09:19:49', 0),
+(578, 53, 6, 'O', 'placement', NULL, 4, '[\"O\",\"X\",\"X\",null,null,\"O\",\"X\",null,null]', '[\"O\",\"X\",\"X\",null,\"O\",\"O\",\"X\",null,null]', '2025-12-27 09:19:59', 0),
+(579, 53, 7, 'X', 'movement', 1, 8, '[\"O\",\"X\",\"X\",null,\"O\",\"O\",\"X\",null,null]', '[\"O\",null,\"X\",null,\"O\",\"O\",\"X\",null,\"X\"]', '2025-12-27 09:20:08', 1054),
+(580, 53, 8, 'O', 'movement', 0, 3, '[\"O\",null,\"X\",null,\"O\",\"O\",\"X\",null,\"X\"]', '[null,null,\"X\",\"O\",\"O\",\"O\",\"X\",null,\"X\"]', '2025-12-27 09:20:09', 2591),
+(581, 55, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:22:06', 0),
+(582, 55, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:22:07', 0),
+(583, 55, 3, 'X', 'placement', NULL, 5, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '2025-12-27 09:22:10', 0),
+(584, 55, 4, 'O', 'placement', NULL, 3, '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '2025-12-27 09:22:12', 0),
+(585, 55, 5, 'X', 'placement', NULL, 6, '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 09:22:20', 0),
+(586, 55, 6, 'O', 'placement', NULL, 2, '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 09:22:21', 0),
+(587, 55, 7, 'X', 'movement', 5, 1, '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '2025-12-27 09:22:29', 2346),
+(588, 55, 8, 'O', 'movement', 3, 7, '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 09:22:31', 4609),
+(589, 55, 10, 'O', 'movement', 0, 3, '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '[null,\"X\",\"O\",\"O\",\"X\",\"X\",null,\"O\",null]', '2025-12-27 09:23:11', 13125),
+(590, 55, 11, 'X', 'movement', 5, 0, '[null,\"X\",\"O\",\"O\",\"X\",\"X\",null,\"O\",null]', '[\"X\",\"X\",\"O\",\"O\",\"X\",null,null,\"O\",null]', '2025-12-27 09:23:19', 1534),
+(591, 55, 12, 'O', 'movement', 2, 5, '[\"X\",\"X\",\"O\",\"O\",\"X\",null,null,\"O\",null]', '[\"X\",\"X\",null,\"O\",\"X\",\"O\",null,\"O\",null]', '2025-12-27 09:23:20', 2693),
+(592, 55, 13, 'X', 'movement', 4, 2, '[\"X\",\"X\",null,\"O\",\"X\",\"O\",null,\"O\",null]', '[\"X\",\"X\",\"X\",\"O\",null,\"O\",null,\"O\",null]', '2025-12-27 09:23:44', 1305),
+(593, 56, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:24:54', 0),
+(594, 56, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 09:24:55', 0),
+(595, 56, 3, 'X', 'placement', NULL, 5, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '2025-12-27 09:25:01', 0),
+(596, 56, 4, 'O', 'placement', NULL, 3, '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '2025-12-27 09:25:03', 0),
+(597, 56, 5, 'X', 'placement', NULL, 6, '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 09:25:07', 0),
+(598, 56, 7, 'X', 'movement', 5, 1, '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '2025-12-27 09:26:13', 1779),
+(599, 56, 8, 'O', 'movement', 3, 7, '[\"O\",\"X\",\"O\",\"O\",\"X\",null,\"X\",null,null]', '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '2025-12-27 09:26:14', 3739),
+(600, 56, 9, 'X', 'movement', 6, 5, '[\"O\",\"X\",\"O\",null,\"X\",null,\"X\",\"O\",null]', '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '2025-12-27 09:26:20', 1081),
+(601, 56, 10, 'O', 'movement', 0, 3, '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '[null,\"X\",\"O\",\"O\",\"X\",\"X\",null,\"O\",null]', '2025-12-27 09:26:22', 3575),
+(602, 56, 11, 'X', 'movement', 1, 6, '[null,\"X\",\"O\",\"O\",\"X\",\"X\",null,\"O\",null]', '[null,null,\"O\",\"O\",\"X\",\"X\",\"X\",\"O\",null]', '2025-12-27 09:26:47', 1973),
+(603, 56, 12, 'O', 'movement', 3, 0, '[null,null,\"O\",\"O\",\"X\",\"X\",\"X\",\"O\",null]', '[\"O\",null,\"O\",null,\"X\",\"X\",\"X\",\"O\",null]', '2025-12-27 09:26:47', 11224),
+(604, 56, 13, 'X', 'movement', 6, 3, '[\"O\",null,\"O\",null,\"X\",\"X\",\"X\",\"O\",null]', '[\"O\",null,\"O\",\"X\",\"X\",\"X\",null,\"O\",null]', '2025-12-27 09:27:56', 3212),
+(605, 58, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 10:49:26', 0),
+(606, 59, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 10:57:04', 0),
+(607, 59, 2, 'O', 'placement', NULL, 3, '[null,null,null,null,\"X\",null,null,null,null]', '[null,null,null,\"O\",\"X\",null,null,null,null]', '2025-12-27 10:57:10', 0),
+(608, 59, 3, 'X', 'placement', NULL, 0, '[null,null,null,\"O\",\"X\",null,null,null,null]', '[\"X\",null,null,\"O\",\"X\",null,null,null,null]', '2025-12-27 10:57:16', 0),
+(609, 59, 4, 'O', 'placement', NULL, 8, '[\"X\",null,null,\"O\",\"X\",null,null,null,null]', '[\"X\",null,null,\"O\",\"X\",null,null,null,\"O\"]', '2025-12-27 10:57:26', 0),
+(610, 59, 5, 'X', 'placement', NULL, 6, '[\"X\",null,null,\"O\",\"X\",null,null,null,\"O\"]', '[\"X\",null,null,\"O\",\"X\",null,\"X\",null,\"O\"]', '2025-12-27 10:57:39', 0),
+(611, 59, 6, 'O', 'placement', NULL, 2, '[\"X\",null,null,\"O\",\"X\",null,\"X\",null,\"O\"]', '[\"X\",null,\"O\",\"O\",\"X\",null,\"X\",null,\"O\"]', '2025-12-27 10:57:50', 0),
+(612, 59, 6, 'O', 'placement', NULL, 2, '[\"X\",null,null,\"O\",\"X\",null,\"X\",null,\"O\"]', '[\"X\",null,\"O\",\"O\",\"X\",null,\"X\",null,\"O\"]', '2025-12-27 10:57:55', 0),
+(613, 59, 7, 'X', 'movement', 0, 1, '[\"X\",null,\"O\",\"O\",\"X\",null,\"X\",null,\"O\"]', '[null,\"X\",\"O\",\"O\",\"X\",null,\"X\",null,\"O\"]', '2025-12-27 10:58:02', 770),
+(614, 59, 7, 'O', 'movement', 3, 5, '[null,\"X\",\"O\",\"O\",\"X\",null,\"X\",null,\"O\"]', '[null,\"X\",\"O\",null,\"X\",\"O\",\"X\",null,\"O\"]', '2025-12-27 10:58:15', 1166),
+(615, 60, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:22:53', 0),
+(616, 60, 1, 'X', 'placement', NULL, 7, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,null,null,null,\"X\",null]', '2025-12-27 11:23:52', 0),
+(617, 60, 1, 'O', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"O\",null,null,null,null]', '2025-12-27 11:24:20', 0),
+(618, 61, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:25:32', 0),
+(619, 61, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:25:34', 0),
+(620, 62, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:28:00', 0),
+(621, 63, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:36:19', 0),
+(622, 63, 2, 'O', 'placement', NULL, 0, '[null,null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:36:20', 0),
+(623, 63, 3, 'X', 'placement', NULL, 5, '[\"O\",null,null,null,\"X\",null,null,null,null]', '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '2025-12-27 11:36:29', 0),
+(624, 63, 4, 'O', 'placement', NULL, 3, '[\"O\",null,null,null,\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '2025-12-27 11:36:30', 0),
+(625, 63, 5, 'X', 'placement', NULL, 6, '[\"O\",null,null,\"O\",\"X\",\"X\",null,null,null]', '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 11:38:30', 0),
+(626, 63, 6, 'O', 'placement', NULL, 2, '[\"O\",null,null,\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '2025-12-27 11:38:32', 0),
+(627, 63, 7, 'X', 'movement', 6, 1, '[\"O\",null,\"O\",\"O\",\"X\",\"X\",\"X\",null,null]', '[\"O\",\"X\",\"O\",\"O\",\"X\",\"X\",null,null,null]', '2025-12-27 11:38:40', 2729),
+(628, 63, 8, 'O', 'movement', 3, 7, '[\"O\",\"X\",\"O\",\"O\",\"X\",\"X\",null,null,null]', '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '2025-12-27 11:38:42', 8103),
+(629, 63, 9, 'X', 'movement', 1, 3, '[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null]', '[\"O\",null,\"O\",\"X\",\"X\",\"X\",null,\"O\",null]', '2025-12-27 11:38:51', 1756),
+(630, 64, 1, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:39:37', 0),
+(631, 64, 2, 'X', 'placement', NULL, 4, '[null,null,null,null,null,null,null,null,null]', '[null,null,null,null,\"X\",null,null,null,null]', '2025-12-27 11:39:43', 0),
+(632, 64, 1, 'O', 'placement', NULL, 6, '[null,null,null,null,\"X\",null,null,null,null]', '[null,null,null,null,\"X\",null,\"O\",null,null]', '2025-12-27 11:39:53', 0),
+(633, 64, 3, 'X', 'placement', NULL, 7, '[null,null,null,null,\"X\",null,\"O\",null,null]', '[null,null,null,null,\"X\",null,\"O\",\"X\",null]', '2025-12-27 11:40:03', 0),
+(634, 64, 4, 'X', 'placement', NULL, 7, '[null,null,null,null,\"X\",null,\"O\",null,null]', '[null,null,null,null,\"X\",null,\"O\",\"X\",null]', '2025-12-27 11:40:10', 0),
+(635, 64, 5, 'X', 'placement', NULL, 7, '[null,null,null,null,\"X\",null,\"O\",null,null]', '[null,null,null,null,\"X\",null,\"O\",\"X\",null]', '2025-12-27 11:40:14', 0),
+(636, 64, 6, 'X', 'placement', NULL, 7, '[null,null,null,null,\"X\",null,\"O\",null,null]', '[null,null,null,null,\"X\",null,\"O\",\"X\",null]', '2025-12-27 11:40:18', 0),
+(637, 64, 7, 'X', 'placement', NULL, 7, '[null,null,null,null,\"X\",null,\"O\",null,null]', '[null,null,null,null,\"X\",null,\"O\",\"X\",null]', '2025-12-27 11:40:20', 0),
+(638, 64, 8, 'X', 'placement', NULL, 2, '[null,null,null,null,\"X\",null,\"O\",null,null]', '[null,null,\"X\",null,\"X\",null,\"O\",null,null]', '2025-12-27 11:40:28', 0),
+(639, 64, 2, 'O', 'placement', NULL, 0, '[null,null,\"X\",null,\"X\",null,\"O\",null,null]', '[\"O\",null,\"X\",null,\"X\",null,\"O\",null,null]', '2025-12-27 11:40:37', 0),
+(640, 64, 3, 'O', 'placement', NULL, 0, '[null,null,\"X\",null,\"X\",null,\"O\",null,null]', '[\"O\",null,\"X\",null,\"X\",null,\"O\",null,null]', '2025-12-27 11:40:42', 0),
+(641, 64, 9, 'X', 'placement', NULL, 3, '[\"O\",null,\"X\",null,\"X\",null,\"O\",null,null]', '[\"O\",null,\"X\",\"X\",\"X\",null,\"O\",null,null]', '2025-12-27 11:40:47', 0),
+(642, 64, 4, 'O', 'placement', NULL, 5, '[\"O\",null,\"X\",\"X\",\"X\",null,\"O\",null,null]', '[\"O\",null,\"X\",\"X\",\"X\",\"O\",\"O\",null,null]', '2025-12-27 11:41:01', 0);
 
 -- --------------------------------------------------------
 
@@ -802,7 +1042,7 @@ CREATE TABLE `game_sessions` (
 INSERT INTO `game_sessions` (`id`, `player1_id`, `player2_id`, `game_mode`, `status`, `winner_id`, `started_at`, `last_move_at`, `completed_at`, `current_phase`, `current_turn`, `board_state`, `player1_score`, `player2_score`) VALUES
 (1, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 11:29:05', '2025-12-26 11:29:41', '2025-12-26 11:29:41', 'movement', 'X', '{\"board\":[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (2, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 11:53:29', '2025-12-26 11:54:11', '2025-12-26 11:54:11', 'movement', 'O', '{\"board\":[\"X\",null,\"X\",null,\"X\",\"O\",\"O\",null,\"O\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
-(3, 1, NULL, 'pvc-hard', 'active', NULL, '2025-12-26 11:55:21', '2025-12-26 11:58:18', NULL, 'movement', 'X', '{\"board\":[\"O\",\"X\",null,null,\"O\",\"X\",\"X\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(3, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 11:55:21', '2025-12-27 11:12:53', '2025-12-27 11:12:53', 'movement', 'X', '{\"board\":[\"O\",\"X\",null,null,\"O\",\"X\",\"X\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (4, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 11:58:26', '2025-12-26 11:59:27', '2025-12-26 11:59:27', 'movement', 'X', '{\"board\":[null,null,\"X\",null,\"X\",\"O\",\"O\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (5, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 12:00:44', '2025-12-26 12:01:44', '2025-12-26 12:01:44', 'movement', 'X', '{\"board\":[\"X\",\"O\",null,null,\"O\",\"X\",\"X\",null,\"O\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (6, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 12:02:01', '2025-12-26 12:02:26', '2025-12-26 12:02:26', 'movement', 'X', '{\"board\":[\"O\",null,\"X\",null,\"O\",null,\"O\",\"X\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
@@ -811,12 +1051,12 @@ INSERT INTO `game_sessions` (`id`, `player1_id`, `player2_id`, `game_mode`, `sta
 (9, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 12:05:35', '2025-12-26 12:06:13', '2025-12-26 12:06:13', 'movement', 'X', '{\"board\":[null,null,\"O\",\"O\",\"X\",null,\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (10, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 12:06:26', '2025-12-26 12:06:52', '2025-12-26 12:06:52', 'movement', 'X', '{\"board\":[null,null,\"O\",\"O\",\"X\",null,\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (11, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 12:07:23', '2025-12-26 12:08:15', '2025-12-26 12:08:15', 'movement', 'X', '{\"board\":[null,null,\"O\",null,\"X\",\"O\",\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
-(12, 1, NULL, 'pvc-hard', 'active', NULL, '2025-12-26 12:10:45', '2025-12-26 12:11:04', NULL, 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(12, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 12:10:45', '2025-12-27 11:13:18', '2025-12-27 11:13:18', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (13, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 12:19:49', '2025-12-26 12:20:39', '2025-12-26 12:20:39', 'movement', 'O', '{\"board\":[\"O\",null,\"X\",\"X\",\"X\",null,\"O\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (14, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 12:22:45', '2025-12-26 12:23:30', '2025-12-26 12:23:30', 'movement', 'O', '{\"board\":[\"O\",null,\"O\",null,\"X\",\"X\",\"X\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (15, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 12:23:50', '2025-12-26 12:24:26', '2025-12-26 12:24:26', 'movement', 'X', '{\"board\":[\"O\",null,null,\"O\",\"X\",null,\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
-(16, 1, NULL, 'pvc-hard', 'active', NULL, '2025-12-26 16:41:08', '2025-12-26 16:41:08', NULL, 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
-(17, 1, NULL, 'pvc-hard', 'active', NULL, '2025-12-26 16:42:14', '2025-12-26 16:42:56', NULL, 'movement', 'X', '{\"board\":[\"X\",null,null,\"O\",\"X\",\"X\",null,\"O\",\"O\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(16, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 16:41:08', '2025-12-27 11:13:10', '2025-12-27 11:13:10', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(17, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 16:42:14', '2025-12-27 11:13:01', '2025-12-27 11:13:01', 'movement', 'X', '{\"board\":[\"X\",null,null,\"O\",\"X\",\"X\",null,\"O\",\"O\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (18, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 16:49:34', '2025-12-26 16:50:12', '2025-12-26 16:50:12', 'movement', 'X', '{\"board\":[\"O\",null,null,\"X\",\"X\",null,\"O\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (19, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 16:50:24', '2025-12-26 16:51:12', '2025-12-26 16:51:12', 'movement', 'X', '{\"board\":[null,null,\"O\",null,\"X\",\"O\",\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (20, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 17:03:02', '2025-12-26 17:04:43', '2025-12-26 17:04:43', 'movement', 'X', '{\"board\":[\"O\",null,\"X\",null,\"X\",null,\"O\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
@@ -831,14 +1071,39 @@ INSERT INTO `game_sessions` (`id`, `player1_id`, `player2_id`, `game_mode`, `sta
 (29, 4, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 18:58:45', '2025-12-26 18:58:53', '2025-12-26 18:58:53', 'placement', 'O', '{\"board\":[\"X\",\"X\",null,\"X\",\"O\",null,\"O\",null,null],\"placedCount\":{\"X\":3,\"O\":2},\"phase\":\"placement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (30, 4, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 18:59:07', '2025-12-26 19:00:04', '2025-12-26 19:00:04', 'movement', 'O', '{\"board\":[\"X\",\"X\",null,\"O\",\"O\",null,\"X\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (31, 4, NULL, 'pvc-hard', 'active', NULL, '2025-12-26 19:00:15', '2025-12-26 19:00:15', NULL, 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
-(32, 1, NULL, 'pvc-hard', 'active', NULL, '2025-12-26 21:50:08', '2025-12-26 21:50:08', NULL, 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(32, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 21:50:08', '2025-12-27 11:12:43', '2025-12-27 11:12:43', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
 (33, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-26 21:58:23', '2025-12-26 22:07:35', '2025-12-26 22:07:35', 'movement', 'X', '{\"board\":[\"O\",null,\"X\",null,\"X\",\"O\",\"O\",\"X\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (34, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 22:08:06', '2025-12-26 22:08:45', '2025-12-26 22:08:45', 'movement', 'O', '{\"board\":[\"X\",\"O\",\"O\",null,null,null,\"X\",\"X\",\"O\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (35, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-26 22:08:59', '2025-12-26 22:09:55', '2025-12-26 22:09:55', 'movement', 'O', '{\"board\":[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (36, 1, NULL, 'pvc-medium', 'completed', 1, '2025-12-26 22:10:06', '2025-12-26 22:11:13', '2025-12-26 22:11:13', 'movement', 'X', '{\"board\":[null,null,null,\"O\",\"X\",\"X\",\"O\",\"X\",\"O\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (37, 1, NULL, 'pvc-medium', 'completed', NULL, '2025-12-26 22:11:38', '2025-12-26 22:12:10', '2025-12-26 22:12:10', 'movement', 'O', '{\"board\":[\"X\",\"O\",\"O\",null,\"X\",\"O\",null,\"X\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
 (38, 1, NULL, 'pvc-medium', 'completed', 1, '2025-12-26 22:12:46', '2025-12-26 22:13:19', '2025-12-26 22:13:19', 'placement', 'X', '{\"board\":[null,null,\"X\",null,\"X\",null,null,null,null],\"placedCount\":{\"X\":2,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
-(39, 1, NULL, 'pvc-hard', 'active', NULL, '2025-12-27 03:39:09', '2025-12-27 03:40:34', NULL, 'movement', 'X', '{\"board\":[\"O\",\"X\",\"O\",null,\"X\",null,null,\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0);
+(39, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 03:39:09', '2025-12-27 11:12:35', '2025-12-27 11:12:35', 'movement', 'X', '{\"board\":[\"O\",\"X\",\"O\",null,\"X\",null,null,\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(40, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-27 06:50:29', '2025-12-27 06:52:07', '2025-12-27 06:52:07', 'movement', 'X', '{\"board\":[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(41, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 06:53:39', '2025-12-27 11:12:26', '2025-12-27 11:12:26', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(42, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 07:05:13', '2025-12-27 11:12:18', '2025-12-27 11:12:18', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(43, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 07:14:03', '2025-12-27 11:12:09', '2025-12-27 11:12:09', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(44, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 07:15:27', '2025-12-27 11:12:00', '2025-12-27 11:12:00', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(45, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 07:18:46', '2025-12-27 11:11:50', '2025-12-27 11:11:50', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(46, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-27 07:19:07', '2025-12-27 07:20:15', '2025-12-27 07:20:15', 'movement', 'X', '{\"board\":[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(47, 1, NULL, 'pvc-hard', 'completed', 1, '2025-12-27 07:59:15', '2025-12-27 08:00:09', '2025-12-27 08:00:09', 'movement', 'X', '{\"board\":[\"O\",\"X\",null,\"X\",\"X\",null,\"O\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(48, 6, NULL, 'pvc-hard', 'active', NULL, '2025-12-27 09:01:47', '2025-12-27 11:47:37', NULL, 'placement', 'X', '{\"board\":[\"O\",null,\"X\",null,\"X\",\"X\",null,null,null],\"placedCount\":{\"X\":3,\"O\":1},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(49, 6, NULL, 'pvc-hard', 'completed', 6, '2025-12-27 09:02:42', '2025-12-27 09:05:50', '2025-12-27 09:05:50', 'movement', 'X', '{\"board\":[\"O\",null,null,null,\"X\",\"O\",\"X\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(50, 6, NULL, 'pvc-hard', 'completed', 6, '2025-12-27 09:08:38', '2025-12-27 09:09:37', '2025-12-27 09:09:37', 'movement', 'X', '{\"board\":[\"O\",\"X\",\"X\",null,\"X\",\"O\",\"O\",null,null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(51, 6, NULL, 'pvc-hard', 'completed', 6, '2025-12-27 09:11:23', '2025-12-27 09:14:29', '2025-12-27 09:14:29', 'movement', 'X', '{\"board\":[\"O\",null,\"X\",\"X\",null,null,\"O\",\"O\",\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(52, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 09:16:34', '2025-12-27 11:08:16', '2025-12-27 11:08:16', 'movement', 'X', '{\"board\":[\"X\",\"X\",null,\"O\",\"X\",\"O\",null,\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(53, 6, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 09:18:59', '2025-12-27 09:20:09', '2025-12-27 09:20:09', 'movement', 'O', '{\"board\":[\"O\",null,\"X\",null,\"O\",\"O\",\"X\",null,\"X\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(54, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 09:21:29', '2025-12-27 11:08:06', '2025-12-27 11:08:06', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(55, 6, NULL, 'pvc-hard', 'completed', 6, '2025-12-27 09:21:56', '2025-12-27 09:23:45', '2025-12-27 09:23:45', 'movement', 'X', '{\"board\":[\"X\",\"X\",null,\"O\",\"X\",\"O\",null,\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(56, 6, NULL, 'pvc-hard', 'completed', 6, '2025-12-27 09:24:43', '2025-12-27 09:27:56', '2025-12-27 09:27:56', 'movement', 'X', '{\"board\":[\"O\",null,\"O\",null,\"X\",\"X\",\"X\",\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(57, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 10:47:50', '2025-12-27 11:02:57', '2025-12-27 11:02:57', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\"}', 0, 0),
+(58, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 10:48:03', '2025-12-27 11:02:51', '2025-12-27 11:02:51', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(59, 1, 5, 'pvp', 'completed', 5, '2025-12-27 10:56:53', '2025-12-27 11:02:21', '2025-12-27 10:58:16', 'movement', 'O', '{\"board\":[null,\"X\",\"O\",\"O\",\"X\",null,\"X\",null,\"O\"],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"O\",\"currentMovingPlayer\":\"O\",\"gameOver\":false}', 0, 0),
+(60, 5, 1, 'pvp', 'completed', 5, '2025-12-27 11:22:34', '2025-12-27 11:39:11', '2025-12-27 11:39:11', 'placement', 'X', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(61, 1, NULL, 'pvc-hard', 'completed', NULL, '2025-12-27 11:25:28', '2025-12-27 11:39:23', '2025-12-27 11:39:23', 'placement', 'X', '{\"board\":[\"O\",null,null,null,\"X\",null,null,null,null],\"placedCount\":{\"X\":1,\"O\":1},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(62, 1, 5, 'pvp', 'completed', 5, '2025-12-27 11:27:07', '2025-12-27 11:39:17', '2025-12-27 11:39:17', 'placement', 'O', '{\"board\":[null,null,null,null,null,null,null,null,null],\"placedCount\":{\"X\":0,\"O\":0},\"phase\":\"placement\",\"turn\":\"O\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(63, 6, NULL, 'pvc-hard', 'completed', 6, '2025-12-27 11:36:13', '2025-12-27 11:38:51', '2025-12-27 11:38:51', 'movement', 'X', '{\"board\":[\"O\",\"X\",\"O\",null,\"X\",\"X\",null,\"O\",null],\"placedCount\":{\"X\":3,\"O\":3},\"phase\":\"movement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0),
+(64, 1, 6, 'pvp', 'active', NULL, '2025-12-27 11:39:22', '2025-12-27 12:05:03', NULL, 'placement', 'X', '{\"board\":[\"O\",null,\"X\",\"X\",\"X\",null,\"O\",null,null],\"placedCount\":{\"X\":3,\"O\":2},\"phase\":\"placement\",\"turn\":\"X\",\"currentMovingPlayer\":\"X\",\"gameOver\":false}', 0, 0);
 
 -- --------------------------------------------------------
 
@@ -870,6 +1135,56 @@ CREATE TABLE `notifications` (
   `is_read` tinyint(1) DEFAULT 0,
   `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `message`, `data`, `is_read`, `created_at`) VALUES
+(1, 6, 'challenge', 'Game Challenge!', 'megamind has challenged you to a game!', '{\"challenge_id\":\"1\",\"challenger_id\":1,\"challenger_name\":\"megamind\"}', 1, '2025-12-27 10:46:05'),
+(2, 5, 'challenge', 'Game Challenge!', 'megamind has challenged you to a game!', '{\"challenge_id\":\"2\",\"challenger_id\":1,\"challenger_name\":\"megamind\"}', 1, '2025-12-27 10:54:17'),
+(3, 5, 'challenge', 'Game Challenge!', 'megamind has challenged you to a game!', '{\"challenge_id\":\"3\",\"challenger_id\":1,\"challenger_name\":\"megamind\"}', 1, '2025-12-27 10:56:46'),
+(4, 1, 'game_start', 'Challenge Accepted!', 'LadyMegaMind accepted your challenge!', '{\"session_id\":\"59\",\"opponent_name\":\"LadyMegaMind\"}', 1, '2025-12-27 10:56:53'),
+(5, 1, 'game_start', 'Rematch Request', 'LadyMegaMind wants a rematch!', '{\"request_id\":\"1\",\"session_id\":59,\"requester_id\":5}', 1, '2025-12-27 11:01:33'),
+(6, 1, 'challenge', 'Game Challenge!', 'LadyMegaMind has challenged you to a game!', '{\"challenge_id\":\"4\",\"challenger_id\":5,\"challenger_name\":\"LadyMegaMind\"}', 1, '2025-12-27 11:20:10'),
+(7, 5, 'challenge', 'Challenge Declined', 'megamind declined your challenge.', '{\"challenge_id\":\"4\"}', 1, '2025-12-27 11:20:45'),
+(8, 5, 'challenge', 'Game Challenge!', 'megamind has challenged you to a game!', '{\"challenge_id\":\"5\",\"challenger_id\":1,\"challenger_name\":\"megamind\"}', 1, '2025-12-27 11:20:52'),
+(9, 1, 'challenge', 'Challenge Declined', 'LadyMegaMind declined your challenge.', '{\"challenge_id\":\"5\"}', 1, '2025-12-27 11:20:58'),
+(10, 1, 'challenge', 'Game Challenge!', 'LadyMegaMind has challenged you to a game!', '{\"challenge_id\":\"6\",\"challenger_id\":5,\"challenger_name\":\"LadyMegaMind\"}', 1, '2025-12-27 11:22:26'),
+(11, 5, 'game_start', 'Challenge Accepted!', 'megamind accepted your challenge!', '{\"session_id\":\"60\",\"opponent_name\":\"megamind\"}', 1, '2025-12-27 11:22:34'),
+(12, 5, 'challenge', 'Game Challenge!', 'megamind has challenged you to a game!', '{\"challenge_id\":\"7\",\"challenger_id\":1,\"challenger_name\":\"megamind\"}', 1, '2025-12-27 11:26:29'),
+(13, 1, 'game_start', 'Challenge Accepted!', 'LadyMegaMind accepted your challenge!', '{\"session_id\":\"62\",\"opponent_name\":\"LadyMegaMind\"}', 1, '2025-12-27 11:27:07'),
+(14, 1, 'challenge', 'Game Challenge!', 'Youngprince has challenged you to a game!', '{\"challenge_id\":\"8\",\"challenger_id\":6,\"challenger_name\":\"Youngprince\"}', 1, '2025-12-27 11:34:58'),
+(15, 6, 'challenge', 'Challenge Declined', 'megamind declined your challenge.', '{\"challenge_id\":\"8\"}', 1, '2025-12-27 11:35:37'),
+(16, 6, 'challenge', 'Game Challenge!', 'megamind has challenged you to a game!', '{\"challenge_id\":\"9\",\"challenger_id\":1,\"challenger_name\":\"megamind\"}', 1, '2025-12-27 11:38:32'),
+(17, 1, 'game_start', 'Challenge Accepted!', 'Youngprince accepted your challenge!', '{\"session_id\":\"64\",\"opponent_name\":\"Youngprince\"}', 1, '2025-12-27 11:39:22'),
+(18, 1, 'challenge', 'Game Challenge!', 'Youngprince has challenged you to a game!', '{\"challenge_id\":\"10\",\"challenger_id\":6,\"challenger_name\":\"Youngprince\"}', 1, '2025-12-27 11:44:36'),
+(19, 5, 'challenge', 'Game Challenge!', 'Youngprince has challenged you to a game!', '{\"challenge_id\":\"11\",\"challenger_id\":6,\"challenger_name\":\"Youngprince\"}', 0, '2025-12-27 12:03:54');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rematch_requests`
+--
+
+CREATE TABLE `rematch_requests` (
+  `id` int(11) NOT NULL,
+  `original_session_id` int(11) NOT NULL,
+  `requester_id` int(11) NOT NULL,
+  `recipient_id` int(11) NOT NULL,
+  `status` enum('pending','accepted','rejected','expired') DEFAULT 'pending',
+  `new_session_id` int(11) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `responded_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `rematch_requests`
+--
+
+INSERT INTO `rematch_requests` (`id`, `original_session_id`, `requester_id`, `recipient_id`, `status`, `new_session_id`, `created_at`, `responded_at`, `expires_at`) VALUES
+(1, 59, 5, 1, 'pending', NULL, '2025-12-27 11:01:33', NULL, '2025-12-27 10:03:33');
 
 -- --------------------------------------------------------
 
@@ -904,11 +1219,12 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `avatar`, `created_at`, `last_login`, `last_activity`, `is_online`, `wins`, `losses`, `draws`, `rating`, `is_admin`, `is_banned`, `ban_reason`, `banned_at`, `banned_by`, `ban_expires_at`) VALUES
-(1, 'megamind', 'udechimarvellous@gmail.com', '$2y$12$Qzn78PPkoyjk5gNv2hF3zO5.h2Oa88mAI8XhQkQFqwhM17ziPjg/O', 'uploads/avatars/avatar_1_1766744222.jpg', '2025-12-26 10:16:41', '2025-12-27 06:24:27', '2025-12-27 06:24:27', 1, 15, 9, 0, 1285, 0, 0, NULL, NULL, NULL, NULL),
+(1, 'megamind', 'udechimarvellous@gmail.com', '$2y$12$Qzn78PPkoyjk5gNv2hF3zO5.h2Oa88mAI8XhQkQFqwhM17ziPjg/O', 'uploads/avatars/avatar_1_1766744222.jpg', '2025-12-26 10:16:41', '2025-12-27 11:06:38', '2025-12-27 11:06:38', 0, 18, 28, 0, 1080, 0, 0, NULL, NULL, NULL, NULL),
 (2, 'Sam odogwu', 'okpanyisamuel@gmail.com', '$2y$12$bP4BMZoZrK2M7SBqK4XMGen4nPWgH0DlHflePX0Y2LCKqX9el1IY6', 'avatar6.svg', '2025-12-26 17:12:15', NULL, NULL, 0, 1, 2, 0, 1005, 0, 0, NULL, NULL, NULL, NULL),
 (3, 'Never', 'garvynick895@gmail.com', '$2y$12$JuyGM65ZwdjqJbw1yngj6eNCXergqDCjuia0eUB3Jb.G86TYUCy1O', 'avatar4.svg', '2025-12-26 17:47:51', NULL, NULL, 0, 0, 1, 0, 990, 0, 0, NULL, NULL, NULL, NULL),
 (4, 'Maziscanner', 'maziscanner@gmail.com', '$2y$12$2icW18lHjwj.apVlEdtABuMbLXN0msH9SlLSu23u3XDx9ibBlktz2', 'avatar1.svg', '2025-12-26 18:57:00', NULL, NULL, 0, 1, 2, 0, 1005, 0, 0, NULL, NULL, NULL, NULL),
-(5, 'LadyMegaMind', 'chiamakacliff@gmail.com', '$2y$12$IBnTGEoTHvY1s52qVq1qouaaKvJJZ55hupSyNQ4xZ20SNc2DtHFjK', NULL, '2025-12-26 23:25:58', NULL, NULL, 0, 1, 0, 0, 1025, 0, 0, NULL, NULL, NULL, NULL);
+(5, 'LadyMegaMind', 'chiamakacliff@gmail.com', '$2y$12$IBnTGEoTHvY1s52qVq1qouaaKvJJZ55hupSyNQ4xZ20SNc2DtHFjK', NULL, '2025-12-26 23:25:58', '2025-12-27 10:52:33', '2025-12-27 10:52:33', 1, 4, 0, 0, 1100, 0, 0, NULL, NULL, NULL, NULL),
+(6, 'Youngprince', 'itzyoungprince20@gmail.com', '$2y$12$kLGVhJbz5uoZFJPA2QZb0u/T9SHXo5c.Z60kadSmved6SyJUfY97C', 'avatar6.svg', '2025-12-27 09:00:45', '2025-12-27 12:02:00', '2025-12-27 12:02:00', 1, 6, 1, 0, 1140, 0, 0, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -933,7 +1249,8 @@ INSERT INTO `user_settings` (`user_id`, `sound_enabled`, `notifications_enabled`
 (2, 1, 1, 'medium', 0),
 (3, 1, 1, 'medium', 0),
 (4, 1, 1, 'medium', 0),
-(5, 1, 1, 'medium', 0);
+(5, 1, 1, 'medium', 0),
+(6, 1, 1, 'medium', 0);
 
 --
 -- Indexes for dumped tables
@@ -996,6 +1313,15 @@ ALTER TABLE `game_challenges`
   ADD KEY `idx_created` (`created_at`);
 
 --
+-- Indexes for table `game_chat_messages`
+--
+ALTER TABLE `game_chat_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_session` (`session_id`),
+  ADD KEY `idx_created` (`created_at`),
+  ADD KEY `game_chat_messages_ibfk_2` (`user_id`);
+
+--
 -- Indexes for table `game_moves`
 --
 ALTER TABLE `game_moves`
@@ -1033,6 +1359,17 @@ ALTER TABLE `notifications`
   ADD KEY `idx_created` (`created_at`);
 
 --
+-- Indexes for table `rematch_requests`
+--
+ALTER TABLE `rematch_requests`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_requester` (`requester_id`),
+  ADD KEY `idx_recipient` (`recipient_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_original_session` (`original_session_id`),
+  ADD KEY `rematch_requests_ibfk_4` (`new_session_id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -1064,61 +1401,73 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `admin_activity_log`
 --
 ALTER TABLE `admin_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `admin_sessions`
 --
 ALTER TABLE `admin_sessions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `ai_strategies`
 --
 ALTER TABLE `ai_strategies`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `ai_training_data`
 --
 ALTER TABLE `ai_training_data`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `game_challenges`
 --
 ALTER TABLE `game_challenges`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `game_chat_messages`
+--
+ALTER TABLE `game_chat_messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `game_moves`
 --
 ALTER TABLE `game_moves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=474;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=643;
 
 --
 -- AUTO_INCREMENT for table `game_sessions`
 --
 ALTER TABLE `game_sessions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT for table `matchmaking_queue`
 --
 ALTER TABLE `matchmaking_queue`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT for table `rematch_requests`
+--
+ALTER TABLE `rematch_requests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -1151,6 +1500,13 @@ ALTER TABLE `game_challenges`
   ADD CONSTRAINT `game_challenges_ibfk_3` FOREIGN KEY (`session_id`) REFERENCES `game_sessions` (`id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `game_chat_messages`
+--
+ALTER TABLE `game_chat_messages`
+  ADD CONSTRAINT `game_chat_messages_ibfk_1` FOREIGN KEY (`session_id`) REFERENCES `game_sessions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `game_chat_messages_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `game_moves`
 --
 ALTER TABLE `game_moves`
@@ -1175,6 +1531,15 @@ ALTER TABLE `matchmaking_queue`
 --
 ALTER TABLE `notifications`
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `rematch_requests`
+--
+ALTER TABLE `rematch_requests`
+  ADD CONSTRAINT `rematch_requests_ibfk_1` FOREIGN KEY (`requester_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `rematch_requests_ibfk_2` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `rematch_requests_ibfk_3` FOREIGN KEY (`original_session_id`) REFERENCES `game_sessions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `rematch_requests_ibfk_4` FOREIGN KEY (`new_session_id`) REFERENCES `game_sessions` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `user_settings`
