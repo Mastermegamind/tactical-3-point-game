@@ -1,0 +1,35 @@
+-- AI Strategies Table
+-- Stores specific game strategies and board state analysis
+
+CREATE TABLE IF NOT EXISTS `ai_strategies` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `strategy_name` VARCHAR(100) NOT NULL,
+  `difficulty_level` ENUM('easy', 'medium', 'hard') NOT NULL DEFAULT 'medium',
+  `board_state` JSON NOT NULL COMMENT 'Current board configuration when strategy was used',
+  `ai_pieces_positions` JSON NOT NULL COMMENT 'Array of AI piece positions [0-8]',
+  `opponent_pieces_positions` JSON NOT NULL COMMENT 'Array of opponent piece positions [0-8]',
+  `move_from` INT(1) NULL COMMENT 'Position moved from (NULL for placement)',
+  `move_to` INT(1) NOT NULL COMMENT 'Position moved to',
+  `move_type` ENUM('placement', 'movement') NOT NULL,
+  `game_phase` ENUM('placement', 'movement', 'endgame') NOT NULL,
+  `opponent_pattern` VARCHAR(50) NULL COMMENT 'Detected opponent playing style',
+  `strategy_type` VARCHAR(50) NOT NULL COMMENT 'e.g., offensive, defensive, counter, trap',
+  `success_count` INT(11) DEFAULT 1 COMMENT 'Times this strategy led to win',
+  `failure_count` INT(11) DEFAULT 0 COMMENT 'Times this strategy led to loss',
+  `success_rate` DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Win percentage for this strategy',
+  `total_uses` INT(11) DEFAULT 1 COMMENT 'Total times strategy was attempted',
+  `avg_moves_to_win` DECIMAL(5,2) NULL COMMENT 'Average moves when this strategy wins',
+  `board_evaluation_score` DECIMAL(8,4) NULL COMMENT 'AI calculated board strength score',
+  `threat_level` TINYINT(1) DEFAULT 0 COMMENT '0-10 scale of opponent threat',
+  `priority_score` INT(11) DEFAULT 50 COMMENT 'AI priority for using this strategy (0-100)',
+  `notes` TEXT NULL COMMENT 'AI generated notes about strategy',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `last_used_at` TIMESTAMP NULL,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `idx_difficulty` (`difficulty_level`),
+  INDEX `idx_strategy_type` (`strategy_type`),
+  INDEX `idx_success_rate` (`success_rate` DESC),
+  INDEX `idx_priority` (`priority_score` DESC),
+  INDEX `idx_phase` (`game_phase`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

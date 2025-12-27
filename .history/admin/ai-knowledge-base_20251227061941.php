@@ -18,19 +18,18 @@ $conn = $db->getConnection();
 $difficulty = $_GET['difficulty'] ?? 'all';
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
 
-// Get AI training data statistics (only training summaries, not individual games)
+// Get AI training data statistics
 $stmt = $conn->query("
     SELECT
         difficulty_level as difficulty,
         COUNT(*) as total_records,
         MAX(created_at) as last_training
     FROM ai_training_data
-    WHERE session_id IS NULL
     GROUP BY difficulty_level
 ");
 $difficultyStats = $stmt->fetchAll();
 
-// Get detailed training data (only training summaries)
+// Get detailed training data
 $query = "
     SELECT
         id,
@@ -43,7 +42,7 @@ $query = "
         avg_moves,
         created_at
     FROM ai_training_data
-    WHERE session_id IS NULL
+    WHERE 1=1
 ";
 
 if ($difficulty !== 'all') {
@@ -60,17 +59,16 @@ $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
 $stmt->execute();
 $trainingRecords = $stmt->fetchAll();
 
-// Get aggregated position weights for visualization (only training summaries)
+// Get aggregated position weights for visualization
 $positionQuery = "
     SELECT
         difficulty_level as difficulty,
         position_weights,
         games_analyzed
     FROM ai_training_data
-    WHERE session_id IS NULL
 ";
 if ($difficulty !== 'all') {
-    $positionQuery .= " AND difficulty_level = :difficulty";
+    $positionQuery .= " WHERE difficulty_level = :difficulty";
 }
 $positionQuery .= " ORDER BY created_at DESC LIMIT 1";
 
@@ -93,7 +91,7 @@ if ($latestWeights) {
     $stmt = $conn->prepare("
         SELECT opening_patterns, winning_sequences
         FROM ai_training_data
-        WHERE session_id IS NULL AND difficulty_level = :difficulty
+        WHERE difficulty_level = :difficulty
         ORDER BY created_at DESC
         LIMIT 1
     ");
@@ -256,9 +254,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <div class="container">
             <h1>🧠 AI Knowledge Base & Neural Network Pathways</h1>
             <p class="mb-0">View and manage AI learning data, position weights, and decision patterns</p>
-            <div class="alert alert-info mt-3" style="background: rgba(255,255,255,0.2); border: none; color: white;">
-                <strong>📘 How it works:</strong> The AI learns by analyzing completed games. When you click "Train AI" on the AI Training page, it examines past games to identify winning strategies, common opening moves, and valuable board positions. This knowledge is then used during gameplay to make smarter decisions.
-            </div>
         </div>
     </div>
 
@@ -317,16 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <?php if (!empty($positionWeightsArray)): ?>
         <div class="content-card">
             <h5 class="mb-4">📊 Position Weights Heatmap (<?= strtoupper($difficulty !== 'all' ? $difficulty : 'medium') ?>)</h5>
-            <p class="text-muted small"><strong>What this shows:</strong> Each cell represents a board position (0-8 for the 3x3 Tic-Tac-Toe grid). The color and number indicate how valuable the AI thinks that position is based on analyzing past winning games.</p>
-            <div class="alert alert-light">
-                <strong>🎯 How to read this:</strong>
-                <ul class="mb-0" style="font-size: 0.9rem;">
-                    <li><strong>Green/High numbers (>3.0):</strong> AI prioritizes these positions - they led to many wins</li>
-                    <li><strong>Yellow/Medium numbers (1.5-3.0):</strong> Decent positions but not critical</li>
-                    <li><strong>Red/Low numbers (<1.5):</strong> Less valuable positions based on historical data</li>
-                    <li><strong>Grid Layout:</strong> Position 0=Top-Left, 1=Top-Center, 2=Top-Right, 4=Center, 8=Bottom-Right</li>
-                </ul>
-            </div>
+            <p class="text-muted small">Shows the strategic value the AI assigns to each board position. Higher values = stronger positions.</p>
 
             <div class="heatmap-grid">
                 <?php for ($i = 0; $i < 16; $i++):
@@ -413,16 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <?php if (!empty($openingPatterns)): ?>
         <div class="content-card">
             <h5 class="mb-3">🌳 Opening Patterns & Decision Tree</h5>
-            <p class="text-muted small"><strong>What this shows:</strong> The AI's favorite opening sequences from past winning games.</p>
-            <div class="alert alert-light">
-                <strong>🔍 How to read this:</strong>
-                <ul class="mb-0" style="font-size: 0.9rem;">
-                    <li><strong>Pattern Array [0, 6, 5]:</strong> Means AI played position 0 first, opponent played 6, AI responded with 5</li>
-                    <li><strong>More frequent patterns:</strong> Openings that led to victories multiple times</li>
-                    <li><strong>Total Moves:</strong> How long that game lasted (lower = faster win)</li>
-                    <li>The AI will try to use these proven opening strategies when playing against users</li>
-                </ul>
-            </div>
+            <p class="text-muted small">Common opening moves learned by the AI, organized by frequency and success rate.</p>
 
             <div class="row">
                 <?php

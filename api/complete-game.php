@@ -1,8 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
@@ -106,6 +107,21 @@ try {
             VALUES (?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([$sessionId, $outcome, $difficulty, $moveCount, $gameDuration, $playerRating]);
+    }
+
+    $redisManager = RedisManager::getInstance();
+    if ($redisManager->isEnabled()) {
+        $redisManager->deleteGameState($sessionId);
+        $redisManager->removeActiveGame($sessionId);
+        $redisManager->invalidateUserStats($session['player1_id']);
+        if ($session['player2_id']) {
+            $redisManager->invalidateUserStats($session['player2_id']);
+        }
+        $redisManager->invalidateTrainingData($isPvC ? $difficulty : null);
+        $redisManager->delete("ai:training:all");
+        $redisManager->deletePattern("ai:stats:*");
+        $redisManager->delete("leaderboard:top_players");
+        $redisManager->deletePattern("leaderboard:online_users:*");
     }
 
     echo json_encode(['success' => true, 'message' => 'Game completed']);

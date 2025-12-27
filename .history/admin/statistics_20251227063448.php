@@ -3,25 +3,23 @@ ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
-try {
-    require_once 'auth_check.php';
-    require_once __DIR__ . '/../config/database.php';
-    require_once __DIR__ . '/../config/RedisManager.php';
+require_once 'auth_check.php';
+require_once __DIR__ . '/../config/database.php';
 
-    $db = Database::getInstance();
-    $conn = $db->getConnection();
+$db = Database::getInstance();
+$conn = $db->getConnection();
 
-    // Overall Statistics
-    $stats = [];
+// Overall Statistics
+$stats = [];
 
 // User statistics
 $stmt = $conn->query("SELECT COUNT(*) FROM users");
 $stats['total_users'] = $stmt->fetchColumn();
 
-$stmt = $conn->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+$stmt = $conn->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAYS)");
 $stats['new_users_week'] = $stmt->fetchColumn();
 
-$stmt = $conn->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+$stmt = $conn->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAYS)");
 $stats['new_users_month'] = $stmt->fetchColumn();
 
 // Game statistics
@@ -50,7 +48,7 @@ $gamesByMode = $stmt->fetchAll();
 $stmt = $conn->query("
     SELECT DATE(started_at) as date, COUNT(*) as count
     FROM game_sessions
-    WHERE started_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    WHERE started_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAYS)
     GROUP BY DATE(started_at)
     ORDER BY date ASC
 ");
@@ -72,32 +70,20 @@ $stmt = $conn->query("
 ");
 $aiPerformance = $stmt->fetchAll();
 
-    // Top Players
-    $redisManager = RedisManager::getInstance();
-    $topPlayers = null;
-    if ($redisManager->isEnabled()) {
-        $topPlayers = $redisManager->get("leaderboard:top_players");
-    }
-
-    if (!$topPlayers) {
-        $stmt = $conn->query("
-            SELECT username, rating, wins, losses, draws,
-                   (wins + losses + draws) as total_games,
-                   CASE WHEN (wins + losses) > 0
-                        THEN ROUND((wins / (wins + losses)) * 100, 1)
-                        ELSE 0
-                   END as win_rate
-            FROM users
-            WHERE (wins + losses + draws) > 0
-            ORDER BY rating DESC
-            LIMIT 10
-        ");
-        $topPlayers = $stmt->fetchAll();
-
-        if ($redisManager->isEnabled()) {
-            $redisManager->set("leaderboard:top_players", $topPlayers, RedisManager::TTL_LEADERBOARD);
-        }
-    }
+// Top Players
+$stmt = $conn->query("
+    SELECT username, rating, wins, losses, draws,
+           (wins + losses + draws) as total_games,
+           CASE WHEN (wins + losses) > 0
+                THEN ROUND((wins / (wins + losses)) * 100, 1)
+                ELSE 0
+           END as win_rate
+    FROM users
+    WHERE (wins + losses + draws) > 0
+    ORDER BY rating DESC
+    LIMIT 10
+");
+$topPlayers = $stmt->fetchAll();
 
 // Recent completions
 $stmt = $conn->query("SELECT COUNT(*) FROM game_sessions WHERE completed_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)");
@@ -110,11 +96,6 @@ $stmt = $conn->query("
     WHERE status = 'completed' AND completed_at IS NOT NULL
 ");
 $stats['avg_game_duration'] = $stmt->fetchColumn();
-
-} catch (Exception $e) {
-    error_log("Statistics page error: " . $e->getMessage());
-    die("Error fetching statistics: " . $e->getMessage());
-}
 ?>
 <!doctype html>
 <html lang="en">

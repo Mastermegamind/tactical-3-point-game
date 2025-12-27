@@ -1,8 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
@@ -75,6 +76,13 @@ try {
     $_SESSION['username'] = $user['username'];
     $_SESSION['email'] = $user['email'];
     $_SESSION['avatar'] = $user['avatar'];
+
+    $redisManager = RedisManager::getInstance();
+    if ($redisManager->isEnabled()) {
+        $redisManager->incrementOnlineUsers();
+        $redisManager->invalidateUserStats($user['id']);
+        $redisManager->deletePattern("leaderboard:online_users:*");
+    }
 
     echo json_encode([
         'success' => true,

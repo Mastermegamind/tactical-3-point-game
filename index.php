@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/config/session.php';
 
 // Redirect based on login status
 if (isset($_SESSION['user_id'])) {

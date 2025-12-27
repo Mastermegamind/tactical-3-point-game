@@ -1,8 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
@@ -20,6 +21,22 @@ try {
     $db = Database::getInstance();
     $conn = $db->getConnection();
 
+    $redisManager = RedisManager::getInstance();
+    if ($redisManager->isEnabled()) {
+        $cachedState = $redisManager->getGameState($sessionId);
+        if (is_array($cachedState) && isset($cachedState['board_state']) && array_key_exists('status', $cachedState)) {
+            echo json_encode([
+                'success' => true,
+                'board_state' => $cachedState['board_state'],
+                'status' => $cachedState['status'],
+                'winner_id' => $cachedState['winner_id'],
+                'current_phase' => $cachedState['current_phase'],
+                'current_turn' => $cachedState['current_turn']
+            ]);
+            exit;
+        }
+    }
+
     $stmt = $conn->prepare("
         SELECT board_state, status, winner_id, current_phase, current_turn
         FROM game_sessions
@@ -31,6 +48,16 @@ try {
     if (!$session) {
         echo json_encode(['success' => false, 'message' => 'Session not found']);
         exit;
+    }
+
+    if ($redisManager->isEnabled()) {
+        $redisManager->cacheGameState($sessionId, [
+            'board_state' => $session['board_state'],
+            'status' => $session['status'],
+            'winner_id' => $session['winner_id'],
+            'current_phase' => $session['current_phase'],
+            'current_turn' => $session['current_turn']
+        ]);
     }
 
     echo json_encode([

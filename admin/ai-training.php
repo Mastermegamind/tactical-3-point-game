@@ -14,12 +14,12 @@ foreach ($difficulties as $difficulty) {
     $stmt = $conn->prepare("
         SELECT
             COUNT(*) as total_games,
-            SUM(CASE WHEN winner = 'O' THEN 1 ELSE 0 END) as ai_wins,
-            SUM(CASE WHEN winner = 'X' THEN 1 ELSE 0 END) as player_wins,
-            SUM(CASE WHEN winner IS NULL THEN 1 ELSE 0 END) as draws,
-            AVG(move_count) as avg_moves
+            SUM(CASE WHEN game_outcome = 'ai_win' THEN 1 ELSE 0 END) as ai_wins,
+            SUM(CASE WHEN game_outcome = 'player_win' THEN 1 ELSE 0 END) as player_wins,
+            SUM(CASE WHEN game_outcome = 'draw' THEN 1 ELSE 0 END) as draws,
+            AVG(total_moves) as avg_moves
         FROM ai_training_data
-        WHERE difficulty = ?
+        WHERE difficulty_level = ?
     ");
     $stmt->execute([$difficulty]);
     $stats = $stmt->fetch();
@@ -292,6 +292,13 @@ foreach ($difficulties as $difficulty) {
                 const data = await response.json();
 
                 if (data.success) {
+                    const stats = data.data.stats || {};
+                    const patterns = data.data.patterns || { opening_moves: [], winning_sequences: [] };
+                    const totalGames = stats.total_games || 0;
+                    const aiWins = stats.ai_wins || 0;
+                    const winRate = totalGames > 0 ? ((aiWins / totalGames) * 100).toFixed(1) : 0;
+                    const strategiesCreated = data.strategies_created || 0;
+
                     Swal.fire({
                         icon: 'success',
                         title: 'AI Training Complete!',
@@ -299,14 +306,21 @@ foreach ($difficulties as $difficulty) {
                             <div style="text-align: left; padding: 1rem;">
                                 <p><strong>Training Results for ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty:</strong></p>
                                 <ul style="list-style: none; padding-left: 0;">
-                                    <li>📊 Games Analyzed: <strong>${data.stats.total_games}</strong></li>
-                                    <li>🎯 Win Rate: <strong>${data.stats.win_rate}%</strong></li>
-                                    <li>📈 Opening Patterns Found: <strong>${data.learned_data.patterns.opening_moves.length}</strong></li>
-                                    <li>🧠 Winning Sequences: <strong>${data.learned_data.patterns.winning_sequences.length}</strong></li>
+                                    <li>📊 Games Analyzed: <strong>${totalGames}</strong></li>
+                                    <li>🎯 AI Wins: <strong>${aiWins}</strong></li>
+                                    <li>📈 Win Rate: <strong>${winRate}%</strong></li>
+                                    <li>🔍 Opening Patterns Found: <strong>${patterns.opening_moves.length}</strong></li>
+                                    <li>🧠 Winning Sequences: <strong>${patterns.winning_sequences.length}</strong></li>
+                                    <li>💾 <strong class="text-success">Strategies Created: ${strategiesCreated}</strong></li>
                                 </ul>
+                                <div class="alert alert-info mt-3" style="font-size: 0.9rem;">
+                                    <strong>✨ New Feature:</strong> Training now generates ${strategiesCreated} reusable strategies
+                                    saved to the database! View them in <a href="ai-strategies.php">AI Strategies</a> page.
+                                </div>
                             </div>
                         `,
-                        confirmButtonText: 'Great!'
+                        confirmButtonText: 'Great!',
+                        width: '600px'
                     }).then(() => {
                         location.reload();
                     });

@@ -1,9 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/ErrorLogger.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
@@ -14,15 +15,31 @@ try {
     $db = Database::getInstance();
     $conn = $db->getConnection();
 
-    // Get all online users except current user
-    $stmt = $conn->prepare("
-        SELECT id, username, avatar, rating, wins, losses, draws
-        FROM users
-        WHERE is_online = 1 AND id != ?
-        ORDER BY rating DESC
-    ");
-    $stmt->execute([$_SESSION['user_id']]);
-    $users = $stmt->fetchAll();
+    $redisManager = RedisManager::getInstance();
+    $cacheKey = "leaderboard:online_users:{$_SESSION['user_id']}";
+
+    if ($redisManager->isEnabled()) {
+        $cachedUsers = $redisManager->get($cacheKey);
+        if ($cachedUsers !== false) {
+            $users = $cachedUsers;
+        }
+    }
+
+    if (!isset($users)) {
+        // Get all online users except current user
+        $stmt = $conn->prepare("
+            SELECT id, username, avatar, rating, wins, losses, draws
+            FROM users
+            WHERE is_online = 1 AND id != ?
+            ORDER BY rating DESC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $users = $stmt->fetchAll();
+
+        if ($redisManager->isEnabled()) {
+            $redisManager->set($cacheKey, $users, RedisManager::TTL_LEADERBOARD);
+        }
+    }
 
     // Check if each user has a pending challenge with current user
     foreach ($users as &$user) {

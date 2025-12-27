@@ -1,9 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/ErrorLogger.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
@@ -68,6 +69,22 @@ try {
         ");
         $stmt->execute([$challenge['challenger_id'], $userId, $initialBoard]);
         $sessionId = $conn->lastInsertId();
+
+        $redisManager = RedisManager::getInstance();
+        if ($redisManager->isEnabled()) {
+            $redisManager->cacheGameState($sessionId, [
+                'board_state' => $initialBoard,
+                'status' => 'active',
+                'winner_id' => null,
+                'current_phase' => 'placement',
+                'current_turn' => 'X'
+            ]);
+            $redisManager->trackActiveGame($sessionId, [
+                'player1_id' => $challenge['challenger_id'],
+                'player2_id' => $userId,
+                'mode' => 'pvp'
+            ]);
+        }
 
         // Update challenge with session ID
         $stmt = $conn->prepare("

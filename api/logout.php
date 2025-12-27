@@ -1,7 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 // Set user as offline
 if (isset($_SESSION['user_id'])) {
@@ -10,6 +11,12 @@ if (isset($_SESSION['user_id'])) {
 
     $stmt = $conn->prepare("UPDATE users SET is_online = FALSE WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
+
+    $redisManager = RedisManager::getInstance();
+    if ($redisManager->isEnabled()) {
+        $redisManager->decrementOnlineUsers();
+        $redisManager->deletePattern("leaderboard:online_users:*");
+    }
 }
 
 // Clear session

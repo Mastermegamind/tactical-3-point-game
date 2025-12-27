@@ -323,7 +323,7 @@ $adminActivity = $stmt->fetchAll();
                                 <?php foreach ($recentUsers as $user): ?>
                                 <tr>
                                     <td><?= htmlspecialchars($user['username']) ?></td>
-                                    <td><?= date('M d, H:i', strtotime($user['last_activity'])) ?></td>
+                                    <td><?= $user['last_activity'] ? date('M d, H:i', strtotime($user['last_activity'])) : 'Never' ?></td>
                                     <td>
                                         <?php if ($user['is_online']): ?>
                                             <span class="badge badge-online">Online</span>

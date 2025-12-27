@@ -1,8 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
@@ -52,6 +53,18 @@ try {
         $gameState['turn'] ?? 'X',
         $sessionId
     ]);
+
+    $redisManager = RedisManager::getInstance();
+    if ($redisManager->isEnabled()) {
+        $cachedState = $redisManager->getGameState($sessionId);
+        $cachePayload = is_array($cachedState) ? $cachedState : [];
+        $cachePayload['board_state'] = $boardStateJson;
+        $cachePayload['current_phase'] = $gameState['phase'] ?? 'placement';
+        $cachePayload['current_turn'] = $gameState['turn'] ?? 'X';
+        $cachePayload['status'] = $cachePayload['status'] ?? 'active';
+        $cachePayload['winner_id'] = $cachePayload['winner_id'] ?? null;
+        $redisManager->cacheGameState($sessionId, $cachePayload);
+    }
 
     echo json_encode(['success' => true, 'message' => 'Game state saved']);
 

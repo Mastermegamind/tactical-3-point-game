@@ -1,8 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
@@ -63,6 +64,22 @@ try {
         // Remove both players from queue
         $stmt = $conn->prepare("DELETE FROM matchmaking_queue WHERE user_id IN (?, ?)");
         $stmt->execute([$_SESSION['user_id'], $opponent['user_id']]);
+
+        $redisManager = RedisManager::getInstance();
+        if ($redisManager->isEnabled()) {
+            $redisManager->cacheGameState($sessionId, [
+                'board_state' => $initialBoard,
+                'status' => 'active',
+                'winner_id' => null,
+                'current_phase' => 'placement',
+                'current_turn' => 'X'
+            ]);
+            $redisManager->trackActiveGame($sessionId, [
+                'player1_id' => $_SESSION['user_id'],
+                'player2_id' => $opponent['user_id'],
+                'mode' => 'pvp'
+            ]);
+        }
 
         echo json_encode([
             'success' => true,

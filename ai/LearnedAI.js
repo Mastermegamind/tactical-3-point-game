@@ -9,6 +9,27 @@ class LearnedAI {
         this.strategyWeights = null;
         this.patterns = null;
         this.loaded = false;
+        this.lastReasoning = '';
+    }
+
+    /**
+     * Log AI reasoning for transparency
+     */
+    logReasoning(message) {
+        this.lastReasoning = message;
+        console.log(`[AI Reasoning] ${message}`);
+
+        // Dispatch event so UI can display it
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('ai-reasoning', { detail: { message } }));
+        }
+    }
+
+    /**
+     * Get last reasoning message
+     */
+    getLastReasoning() {
+        return this.lastReasoning;
     }
 
     /**
@@ -59,16 +80,23 @@ class LearnedAI {
     getWeightedPlacement(board, emptyPositions, placedCount) {
         // First, check for winning moves
         const winMove = this.findWinningPlacement(board, 'O');
-        if (winMove !== -1) return winMove;
+        if (winMove !== -1) {
+            this.logReasoning(`🎯 Winning move detected at position ${winMove}`);
+            return winMove;
+        }
 
         // Second, block player's winning moves
         const blockMove = this.findWinningPlacement(board, 'X');
-        if (blockMove !== -1) return blockMove;
+        if (blockMove !== -1) {
+            this.logReasoning(`🛡️ Blocking opponent's winning move at position ${blockMove}`);
+            return blockMove;
+        }
 
         // Use learned opening patterns for first placement
         if (placedCount.O === 0 && this.patterns && this.patterns.opening_moves.length > 0) {
             const commonOpening = this.getMostCommonOpening();
             if (commonOpening && board[commonOpening.positions[0]] === null) {
+                this.logReasoning(`📚 Using learned opening pattern: position ${commonOpening.positions[0]} (from ${commonOpening.count || 1} winning games)`);
                 return commonOpening.positions[0];
             }
         }
@@ -76,9 +104,11 @@ class LearnedAI {
         // Use weighted selection for other placements
         let bestScore = -1;
         let bestMove = -1;
+        let positionScores = {};
 
         emptyPositions.forEach(pos => {
-            let score = this.strategyWeights[pos] || 1.0;
+            let baseWeight = this.strategyWeights[pos] || 1.0;
+            let score = baseWeight;
 
             // Bonus for center
             if (pos === 4) score *= 1.5;
@@ -89,11 +119,16 @@ class LearnedAI {
             // Add randomness to avoid predictability
             score *= (0.8 + Math.random() * 0.4);
 
+            positionScores[pos] = { score, baseWeight };
+
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = pos;
             }
         });
+
+        const chosenWeight = positionScores[bestMove].baseWeight;
+        this.logReasoning(`🧠 Strategic placement at position ${bestMove} (learned weight: ${chosenWeight.toFixed(2)}, score: ${bestScore.toFixed(2)})`);
 
         return bestMove;
     }
@@ -120,7 +155,7 @@ class LearnedAI {
         Object.values(openingMap).forEach(entry => {
             if (entry.count > maxCount) {
                 maxCount = entry.count;
-                bestOpening = entry.pattern;
+                bestOpening = { ...entry.pattern, count: entry.count };
             }
         });
 

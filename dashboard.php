@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/config/session.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -7,17 +7,30 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/RedisManager.php';
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
+$redisManager = RedisManager::getInstance();
 
 // Get user stats
-$stmt = $conn->prepare("
-    SELECT username, email, avatar, wins, losses, draws, rating, created_at, last_login
-    FROM users WHERE id = ?
-");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
+$user = null;
+if ($redisManager->isEnabled()) {
+    $user = $redisManager->getUserStats($_SESSION['user_id']);
+}
+
+if (!$user) {
+    $stmt = $conn->prepare("
+        SELECT username, email, avatar, wins, losses, draws, rating, created_at, last_login
+        FROM users WHERE id = ?
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch();
+
+    if ($redisManager->isEnabled()) {
+        $redisManager->cacheUserStats($_SESSION['user_id'], $user);
+    }
+}
 
 // Pagination
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;

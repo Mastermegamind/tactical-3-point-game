@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/config/session.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -7,9 +7,11 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/RedisManager.php';
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
+$redisManager = RedisManager::getInstance();
 
 // Get game mode
 $mode = $_GET['mode'] ?? null;
@@ -67,6 +69,21 @@ if ($sessionId) {
     ");
     $stmt->execute([$_SESSION['user_id'], $mode, $initialBoard]);
     $sessionId = $conn->lastInsertId();
+
+    if ($redisManager->isEnabled()) {
+        $redisManager->cacheGameState($sessionId, [
+            'board_state' => $initialBoard,
+            'status' => 'active',
+            'winner_id' => null,
+            'current_phase' => 'placement',
+            'current_turn' => 'X'
+        ]);
+        $redisManager->trackActiveGame($sessionId, [
+            'player1_id' => $_SESSION['user_id'],
+            'player2_id' => null,
+            'mode' => $mode
+        ]);
+    }
 }
 
 // Get user info
@@ -330,6 +347,15 @@ function renderAvatar($avatar, $presetAvatars) {
             </div>
           </div>
 
+          <?php if (strpos($mode, 'pvc') !== false): ?>
+          <div class="stat-card" id="aiReasoningPanel" style="display:none;">
+            <div class="stat-label">🤖 AI Thinking</div>
+            <div id="aiReasoningText" style="font-size: 0.9rem; color: #667eea; margin-top: 0.5rem; line-height: 1.4;">
+              Analyzing board...
+            </div>
+          </div>
+          <?php endif; ?>
+
         </div>
       </div>
 
@@ -385,9 +411,13 @@ const USER_ID = <?= $_SESSION['user_id'] ?>;
 const PLAYER_X_NAME = '<?= $playerSide === 'X' ? htmlspecialchars($currentUser['username'], ENT_QUOTES) : ($isOnlineGame && $opponent ? htmlspecialchars($opponent['name'], ENT_QUOTES) : 'Blue') ?>';
 const PLAYER_O_NAME = '<?= $playerSide === 'O' ? htmlspecialchars($currentUser['username'], ENT_QUOTES) : ($isOnlineGame && $opponent ? htmlspecialchars($opponent['name'], ENT_QUOTES) : (strpos($mode, 'pvc') !== false ? 'AI' : 'Pink')) ?>';
 
+// AI Difficulty from game settings
+const AI_DIFFICULTY = '<?= $_GET['difficulty'] ?? 'medium' ?>';
+
 // Include the original game.js logic here (will be loaded separately)
 </script>
 <script src="ai/LearnedAI.js?v=<?= time() ?>"></script>
+<script src="ai/AdvancedAI.js?v=<?= time() ?>"></script>
 <script src="game-engine.js?v=<?= time() ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -470,6 +500,22 @@ if (IS_ONLINE) {
         }
     }, 2000);
 }
+
+// Listen for AI reasoning events
+window.addEventListener('ai-reasoning', (event) => {
+    const panel = document.getElementById('aiReasoningPanel');
+    const text = document.getElementById('aiReasoningText');
+
+    if (panel && text) {
+        panel.style.display = 'block';
+        text.textContent = event.detail.message;
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 5000);
+    }
+});
 </script>
 
 </body>

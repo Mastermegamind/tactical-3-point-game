@@ -1,9 +1,11 @@
 <?php
 require_once 'auth_check.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/RedisManager.php';
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
+$redisManager = RedisManager::getInstance();
 
 // Handle user actions
 $message = '';
@@ -20,6 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'User deleted successfully';
             $messageType = 'success';
             logAdminActivity('delete_user', "Deleted user ID: $userId", 'user', $userId);
+            if ($redisManager->isEnabled()) {
+                $redisManager->invalidateUserStats($userId);
+                $redisManager->delete("leaderboard:top_players");
+                $redisManager->deletePattern("leaderboard:online_users:*");
+            }
         } catch (Exception $e) {
             $message = 'Failed to delete user: ' . $e->getMessage();
             $messageType = 'danger';
@@ -41,6 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'User updated successfully';
             $messageType = 'success';
             logAdminActivity('update_user', "Updated user ID: $userId stats", 'user', $userId);
+            if ($redisManager->isEnabled()) {
+                $redisManager->invalidateUserStats($userId);
+                $redisManager->delete("leaderboard:top_players");
+            }
         } catch (Exception $e) {
             $message = 'Failed to update user: ' . $e->getMessage();
             $messageType = 'danger';
@@ -89,6 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'User banned successfully';
             $messageType = 'success';
             logAdminActivity('ban_user', "Banned user ID: $userId - Reason: $banReason", 'user', $userId);
+            if ($redisManager->isEnabled()) {
+                $redisManager->deletePattern("leaderboard:online_users:*");
+            }
         } catch (Exception $e) {
             $message = 'Failed to ban user: ' . $e->getMessage();
             $messageType = 'danger';
@@ -129,6 +143,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'User statistics reset successfully';
             $messageType = 'success';
             logAdminActivity('reset_stats', "Reset stats for user ID: $userId", 'user', $userId);
+            if ($redisManager->isEnabled()) {
+                $redisManager->invalidateUserStats($userId);
+                $redisManager->delete("leaderboard:top_players");
+            }
         } catch (Exception $e) {
             $message = 'Failed to reset stats: ' . $e->getMessage();
             $messageType = 'danger';
@@ -143,6 +161,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'User logged out successfully';
             $messageType = 'success';
             logAdminActivity('force_logout', "Forced logout for user ID: $userId", 'user', $userId);
+            if ($redisManager->isEnabled()) {
+                $redisManager->deletePattern("leaderboard:online_users:*");
+            }
         } catch (Exception $e) {
             $message = 'Failed to logout user: ' . $e->getMessage();
             $messageType = 'danger';
@@ -183,6 +204,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Rating $direction by " . abs($ratingChange) . " points";
             $messageType = 'success';
             logAdminActivity('adjust_rating', "Adjusted rating by $ratingChange for user ID: $userId", 'user', $userId);
+            if ($redisManager->isEnabled()) {
+                $redisManager->invalidateUserStats($userId);
+                $redisManager->delete("leaderboard:top_players");
+            }
         } catch (Exception $e) {
             $message = 'Failed to adjust rating: ' . $e->getMessage();
             $messageType = 'danger';
