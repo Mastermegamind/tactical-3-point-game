@@ -362,6 +362,41 @@ function renderAvatar($avatar, $presetAvatars) {
           </div>
           <?php endif; ?>
 
+          <?php if ($isOnlineGame): ?>
+          <div class="stat-card" id="chatPanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="stat-label">💬 Chat</div>
+              <button class="btn btn-sm btn-outline-secondary" onclick="toggleChat()" id="chatToggle">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                  <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                </svg>
+              </button>
+            </div>
+            <div id="chatContainer" style="display: block;">
+              <div id="chatMessages" style="height: 250px; overflow-y: auto; background: #f8f9fa; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem; scroll-behavior: smooth;">
+                <div class="text-center text-muted small" style="padding: 2rem 0;">
+                  No messages yet. Say hello! 👋
+                </div>
+              </div>
+              <form id="chatForm" onsubmit="sendMessage(event)" style="display: flex; gap: 0.5rem;">
+                <input
+                  type="text"
+                  id="chatInput"
+                  class="form-control form-control-sm"
+                  placeholder="Type a message..."
+                  maxlength="200"
+                  autocomplete="off"
+                  style="flex: 1;"
+                >
+                <button type="submit" class="btn btn-primary btn-sm" style="min-width: 60px;">
+                  Send
+                </button>
+              </form>
+            </div>
+          </div>
+          <?php endif; ?>
+
         </div>
       </div>
 
@@ -565,6 +600,259 @@ window.addEventListener('ai-reasoning', (event) => {
         }, 5000);
     }
 });
+
+// ===== CHAT FUNCTIONALITY =====
+let lastChatMessageId = 0;
+
+function toggleChat() {
+    const container = document.getElementById('chatContainer');
+    const toggle = document.getElementById('chatToggle');
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        toggle.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+    } else {
+        container.style.display = 'none';
+        toggle.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/></svg>';
+    }
+}
+
+async function sendMessage(event) {
+    event.preventDefault();
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    try {
+        const response = await fetch('api/send-chat-message.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: SESSION_ID,
+                message: message
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            input.value = '';
+            // Message will appear via polling
+        } else {
+            console.error('Failed to send message:', data.message);
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+    }
+}
+
+async function loadChatMessages() {
+    try {
+        const response = await fetch(`api/get-chat-messages.php?session_id=${SESSION_ID}&after=${lastChatMessageId}`);
+        const data = await response.json();
+
+        if (data.success && data.messages.length > 0) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const wasEmpty = messagesContainer.querySelector('.text-center');
+
+            if (wasEmpty) {
+                messagesContainer.innerHTML = '';
+            }
+
+            data.messages.forEach(msg => {
+                const isMe = msg.user_id == USER_ID;
+                const messageDiv = document.createElement('div');
+                messageDiv.style.marginBottom = '0.75rem';
+                messageDiv.innerHTML = `
+                    <div style="display: flex; justify-content: ${isMe ? 'flex-end' : 'flex-start'};">
+                        <div style="max-width: 70%; background: ${isMe ? '#667eea' : '#e9ecef'}; color: ${isMe ? 'white' : '#212529'}; padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.9rem;">
+                            ${!isMe ? `<strong style="display: block; margin-bottom: 0.25rem; font-size: 0.75rem; opacity: 0.8;">${msg.username}</strong>` : ''}
+                            <div>${escapeHtml(msg.message)}</div>
+                            <div style="font-size: 0.7rem; margin-top: 0.25rem; opacity: 0.7;">${formatTime(msg.created_at)}</div>
+                        </div>
+                    </div>
+                `;
+                messagesContainer.appendChild(messageDiv);
+                lastChatMessageId = msg.id;
+            });
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Load chat messages if in online game
+if (IS_ONLINE) {
+    // Load initial messages
+    loadChatMessages();
+    // Poll for new messages every 2 seconds
+    setInterval(loadChatMessages, 2000);
+}
+
+// ===== REMATCH FUNCTIONALITY =====
+async function requestRematch() {
+    try {
+        Swal.fire({
+            title: 'Requesting Rematch...',
+            text: 'Sending rematch request to opponent',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const response = await fetch('api/request-rematch.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: SESSION_ID })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                title: 'Rematch Requested!',
+                text: 'Waiting for opponent to accept...',
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    // Poll for rematch response
+                    const checkInterval = setInterval(async () => {
+                        try {
+                            const checkResponse = await fetch(`api/check-rematch-status.php?request_id=${data.request_id}`);
+                            const checkData = await checkResponse.json();
+
+                            if (checkData.status === 'accepted') {
+                                clearInterval(checkInterval);
+                                Swal.fire({
+                                    title: 'Rematch Accepted!',
+                                    text: 'Starting new game...',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = `play.php?session=${checkData.new_session_id}`;
+                                });
+                            } else if (checkData.status === 'rejected') {
+                                clearInterval(checkInterval);
+                                Swal.fire({
+                                    title: 'Rematch Declined',
+                                    text: 'Opponent declined the rematch',
+                                    icon: 'error',
+                                    confirmButtonText: 'Back to Dashboard',
+                                    confirmButtonColor: '#667eea'
+                                }).then(() => {
+                                    window.location.href = 'dashboard.php';
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error checking rematch status:', error);
+                        }
+                    }, 2000);
+
+                    // Auto-cancel after 60 seconds
+                    setTimeout(() => {
+                        clearInterval(checkInterval);
+                        Swal.fire({
+                            title: 'Request Timeout',
+                            text: 'Opponent did not respond',
+                            icon: 'warning',
+                            confirmButtonText: 'Back to Dashboard',
+                            confirmButtonColor: '#667eea'
+                        }).then(() => {
+                            window.location.href = 'dashboard.php';
+                        });
+                    }, 60000);
+                }
+            });
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: data.message || 'Failed to send rematch request',
+                icon: 'error',
+                confirmButtonColor: '#667eea'
+            });
+        }
+    } catch (error) {
+        console.error('Error requesting rematch:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Failed to send rematch request',
+            icon: 'error',
+            confirmButtonColor: '#667eea'
+        });
+    }
+}
+
+// Check for incoming rematch requests
+if (IS_ONLINE) {
+    setInterval(async () => {
+        try {
+            const response = await fetch(`api/check-incoming-rematch.php?session_id=${SESSION_ID}`);
+            const data = await response.json();
+
+            if (data.has_request) {
+                Swal.fire({
+                    title: 'Rematch Request',
+                    text: `${data.requester_name} wants a rematch!`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept',
+                    cancelButtonText: 'Decline',
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#ef4444',
+                    allowOutsideClick: false
+                }).then(async (result) => {
+                    try {
+                        const respondResponse = await fetch('api/respond-rematch.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                request_id: data.request_id,
+                                accept: result.isConfirmed
+                            })
+                        });
+
+                        const respondData = await respondResponse.json();
+
+                        if (result.isConfirmed && respondData.success) {
+                            Swal.fire({
+                                title: 'Rematch Accepted!',
+                                text: 'Starting new game...',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = `play.php?session=${respondData.new_session_id}`;
+                            });
+                        } else if (!result.isConfirmed) {
+                            window.location.href = 'dashboard.php';
+                        }
+                    } catch (error) {
+                        console.error('Error responding to rematch:', error);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error checking rematch requests:', error);
+        }
+    }, 5000); // Check every 5 seconds
+}
 </script>
 
 </body>

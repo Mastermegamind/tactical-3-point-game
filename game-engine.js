@@ -542,18 +542,33 @@ function showGameResultModal(winnerSymbol, isPlayerWin, winnerName) {
     </div>
   `;
 
+  // Show different buttons for online vs AI games
+  const buttons = IS_ONLINE ? {
+    showDenyButton: true,
+    showCancelButton: false,
+    confirmButtonText: 'Rematch',
+    denyButtonText: 'Dashboard',
+    confirmButtonColor: '#667eea',
+    denyButtonColor: '#6c757d'
+  } : {
+    confirmButtonText: 'Back to Dashboard',
+    confirmButtonColor: '#667eea'
+  };
+
   Swal.fire({
     title: title,
     html: htmlContent,
     icon: icon,
-    confirmButtonText: 'Back to Dashboard',
-    confirmButtonColor: '#667eea',
+    ...buttons,
     allowOutsideClick: false,
     customClass: {
       popup: 'game-result-modal'
     }
   }).then((result) => {
-    if (result.isConfirmed) {
+    if (result.isConfirmed && IS_ONLINE) {
+      // Request rematch
+      requestRematch();
+    } else if (result.isDenied || (result.isConfirmed && !IS_ONLINE)) {
       window.location.href = 'dashboard.php';
     }
   });
