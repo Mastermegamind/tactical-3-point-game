@@ -427,23 +427,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <div class="row">
                 <?php
                 $sortedPatterns = $openingPatterns;
-                if (is_array($sortedPatterns)) {
+                if (is_array($sortedPatterns) && !empty($sortedPatterns)) {
                     arsort($sortedPatterns);
                     $patternCount = 0;
                     foreach (array_slice($sortedPatterns, 0, 12) as $pattern => $score):
                         $patternCount++;
+                        // Handle case where score might be an array or non-numeric
+                        $scoreValue = is_array($score) ? ($score['score'] ?? 0) : $score;
+                        $scoreValue = is_numeric($scoreValue) ? (float)$scoreValue : 0;
                 ?>
                 <div class="col-md-4 mb-3">
                     <div class="pattern-tree">
                         <div class="pattern-node">
                             <strong>Pattern #<?= $patternCount ?></strong><br>
                             <small>Move: <?= htmlspecialchars($pattern) ?></small><br>
-                            <span class="badge bg-success">Score: <?= round($score, 2) ?></span>
+                            <span class="badge bg-success">Score: <?= round($scoreValue, 2) ?></span>
                         </div>
                     </div>
                 </div>
                 <?php
                     endforeach;
+                } else {
+                ?>
+                <div class="col-12">
+                    <p class="text-muted text-center">No opening patterns available yet. The AI will learn patterns as it plays more games.</p>
+                </div>
+                <?php
                 }
                 ?>
             </div>

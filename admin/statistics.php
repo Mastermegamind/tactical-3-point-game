@@ -257,7 +257,7 @@ $stats['avg_game_duration'] = $stmt->fetchColumn();
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
-                    <div class="stat-value"><?= $stats['avg_game_duration'] ? gmdate("i:s", $stats['avg_game_duration']) : '0:00' ?></div>
+                    <div class="stat-value"><?= $stats['avg_game_duration'] ? gmdate("i:s", (int)$stats['avg_game_duration']) : '0:00' ?></div>
                     <div class="stat-label">Avg Game Duration</div>
                     <small class="text-muted">minutes:seconds</small>
                 </div>
@@ -314,7 +314,7 @@ $stats['avg_game_duration'] = $stmt->fetchColumn();
                                 </span>
                             </td>
                             <td><?= number_format($perf['avg_moves'], 1) ?></td>
-                            <td><?= gmdate("i:s", $perf['avg_duration'] ?? 0) ?></td>
+                            <td><?= gmdate("i:s", (int)($perf['avg_duration'] ?? 0)) ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
