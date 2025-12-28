@@ -702,25 +702,51 @@ async function makeComputerMove() {
 
   computerMoving = true;
 
-  // For hard mode, try DeepSeek first, then fallback to local AI
   const difficulty = GAME_MODE.split("-")[1];
 
-  if (difficulty === "hard") {
-    // Try DeepSeek LLM first (preferred for hard mode)
-    const deepSeekMove = await tryDeepSeekMove();
+  // Easy and medium always use local AI only
+  if (difficulty === "easy" || difficulty === "medium") {
+    setTimeout(() => {
+      if (phase === "placement") {
+        computerPlacement();
+      } else if (phase === "movement") {
+        computerMovement();
+      }
+      computerMoving = false;
+    }, 500);
+    return;
+  }
 
-    if (deepSeekMove) {
-      // DeepSeek provided a valid move
-      console.log('🤖 Using DeepSeek AI:', deepSeekMove.reasoning);
-      executeDeepSeekMove(deepSeekMove);
+  // Hard mode: Use local AI + LLM(s)
+  if (difficulty === "hard") {
+    // First get local AI suggestion
+    const localAIMove = getLocalAISuggestion();
+
+    // Try ensemble/LLM reasoning
+    const llmMove = await tryLLMMove(localAIMove);
+
+    if (llmMove) {
+      console.log('🤖 Using LLM reasoning:', llmMove.reasoning);
+      if (llmMove.ensemble) {
+        console.log(`📊 Ensemble: ${llmMove.ensemble.llm_count} LLMs, ${llmMove.ensemble.consensus}% consensus`);
+        console.log('  Providers:', llmMove.ensemble.providers.join(', '));
+      }
+      executeDeepSeekMove(llmMove);
       computerMoving = false;
       return;
     }
 
-    console.log('⚠️ DeepSeek not available, using local AI');
+    console.log('⚠️ LLM not available, using local AI only');
+
+    // Fallback to local AI if LLM fails
+    if (localAIMove) {
+      executeDeepSeekMove(localAIMove);
+      computerMoving = false;
+      return;
+    }
   }
 
-  // Fallback to local AI (AdvancedAI or LearnedAI)
+  // Final fallback
   setTimeout(() => {
     if (phase === "placement") {
       computerPlacement();
@@ -770,15 +796,128 @@ async function playAgainPvC() {
 }
 
 /**
- * Try to get move from DeepSeek LLM
- * Returns null if DeepSeek is unavailable or fails
+ * Get local AI's move suggestion
+ * This will be shared with LLMs for ensemble reasoning
  */
-async function tryDeepSeekMove() {
-  // Get AI provider preference (default: deepseek)
-  const aiProvider = localStorage.getItem('ai_provider') || 'deepseek';
+function getLocalAISuggestion() {
+  let move = null;
 
+  if (phase === "placement") {
+    // Use learned AI if available
+    if (aiLoaded && learnedAI) {
+      const position = learnedAI.getBestPlacement(board, placedCount);
+      if (position !== -1) {
+        move = {
+          move_type: 'placement',
+          to_position: position,
+          reasoning: 'Local AI strategic placement',
+          confidence: 80
+        };
+      }
+    }
+
+    // Fallback to hard-coded AI logic
+    if (!move) {
+      let position = findWinningMove(COMPUTER_PLAYER);
+      if (position === -1) position = findWinningMove(turn === "X" ? "O" : "X");
+      if (position === -1 && board[4] === null) position = 4;
+      if (position === -1) position = findFirstEmpty([0, 2, 6, 8]);
+      if (position === -1) position = findFirstEmpty([1, 3, 5, 7]);
+
+      if (position !== -1) {
+        move = {
+          move_type: 'placement',
+          to_position: position,
+          reasoning: 'Local AI tactical placement',
+          confidence: 75
+        };
+      }
+    }
+  } else if (phase === "movement") {
+    // Use learned AI if available
+    if (aiLoaded && learnedAI) {
+      const fromTo = learnedAI.getBestMovement(board, COMPUTER_PLAYER);
+      if (fromTo) {
+        move = {
+          move_type: 'movement',
+          from_position: fromTo.from,
+          to_position: fromTo.to,
+          reasoning: 'Local AI strategic movement',
+          confidence: 80
+        };
+      }
+    }
+
+    // Fallback to hard-coded AI logic
+    if (!move) {
+      const fromTo = findBestMovementMove();
+      if (fromTo) {
+        move = {
+          move_type: 'movement',
+          from_position: fromTo.from,
+          to_position: fromTo.to,
+          reasoning: 'Local AI tactical movement',
+          confidence: 75
+        };
+      }
+    }
+  }
+
+  return move;
+}
+
+/**
+ * Try to get move from LLM(s) - mode controlled by .env (ensemble or single)
+ * Returns null if LLM is unavailable or fails
+ */
+async function tryLLMMove(localAIMove) {
   try {
-    const response = await fetch('api/llm-move.php', {
+    // Get AI configuration from server (.env settings)
+    const configResponse = await fetch('api/get-ai-config.php');
+    const config = await configResponse.json();
+
+    if (!config.success) {
+      console.log('Could not load AI configuration, using local AI only');
+      return null;
+    }
+
+    const aiMode = config.ai_mode || 'ensemble';
+    const preferredProvider = config.preferred_provider || 'deepseek';
+
+    if (aiMode === 'ensemble') {
+      // Ensemble mode: Query all configured providers
+      console.log('🧠 Using Ensemble AI mode...');
+
+      const ensembleResponse = await fetch('api/ensemble-ai-move.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          board: board,
+          gameState: {
+            phase: phase,
+            placedCount: placedCount,
+            turn: turn
+          },
+          playerSide: COMPUTER_PLAYER,
+          session_id: SESSION_ID,
+          player_id: USER_ID,
+          local_ai_move: localAIMove
+        })
+      });
+
+      const ensembleData = await ensembleResponse.json();
+
+      if (ensembleData.success && ensembleData.move) {
+        return ensembleData.move;
+      }
+
+      console.log('Ensemble mode failed, falling back to single provider...');
+    }
+
+    // Single provider mode (or ensemble fallback)
+    console.log(`🤖 Using Single Provider mode: ${preferredProvider}`);
+
+    const singleResponse = await fetch('api/llm-move.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -791,18 +930,14 @@ async function tryDeepSeekMove() {
         playerSide: COMPUTER_PLAYER,
         session_id: SESSION_ID,
         player_id: USER_ID,
-        provider: aiProvider
+        provider: preferredProvider
       })
     });
 
-    const data = await response.json();
+    const singleData = await singleResponse.json();
 
-    if (data.success && data.move) {
-      // Log which provider was used
-      if (data.provider) {
-        console.log(`🤖 Using ${data.provider}:`, data.reasoning);
-      }
-      return data.move;
+    if (singleData.success && singleData.move) {
+      return singleData.move;
     }
 
     return null; // Fallback to local AI
