@@ -24,22 +24,22 @@ $isOnlineGame = false;
 $opponent = null;
 $playerSide = 'X'; // Default player is X (blue)
 
-// If no session ID provided and no mode requested, check for active game session
-if (!$sessionId && !$mode) {
+// If no session ID provided, check for active game session
+if (!$sessionId) {
     $stmt = $conn->prepare("
         SELECT id, game_mode
         FROM game_sessions
         WHERE (player1_id = ? OR player2_id = ?)
         AND status = 'active'
-        AND last_move_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
-        ORDER BY last_move_at DESC
+        AND updated_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ORDER BY updated_at DESC
         LIMIT 1
     ");
     $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
     $activeSession = $stmt->fetch();
 
-    if ($activeSession) {
-        // Redirect to active session
+    if ($activeSession && !$mode) {
+        // Redirect to active session if no new mode requested
         $sessionId = $activeSession['id'];
         header("Location: play.php?session=$sessionId");
         exit;

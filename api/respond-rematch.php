@@ -40,12 +40,22 @@ try {
     }
 
     if ($accept) {
-        // Create new game session
+        // Get the previous game to check who went first
+        $stmt = $conn->prepare("SELECT board_state FROM game_sessions WHERE id = ?");
+        $stmt->execute([$request['original_session_id']]);
+        $prevGame = $stmt->fetch();
+
+        // Determine starting turn - alternate from previous game
+        $prevState = $prevGame ? json_decode($prevGame['board_state'], true) : null;
+        $prevFirstTurn = $prevState['turn'] ?? 'X';
+        $newFirstTurn = $prevFirstTurn === 'X' ? 'O' : 'X';
+
+        // Create new game session with alternating turn
         $initialBoard = json_encode([
             'board' => array_fill(0, 9, null),
             'placedCount' => ['X' => 0, 'O' => 0],
             'phase' => 'placement',
-            'turn' => 'X'
+            'turn' => $newFirstTurn
         ]);
 
         // Player 1 is the requester, Player 2 is the recipient (you)

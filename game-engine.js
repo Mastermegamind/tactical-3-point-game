@@ -607,8 +607,12 @@ function showGameResultModal(winnerSymbol, isPlayerWin, winnerName) {
     confirmButtonColor: '#667eea',
     denyButtonColor: '#6c757d'
   } : {
-    confirmButtonText: 'Back to Dashboard',
-    confirmButtonColor: '#667eea'
+    showDenyButton: true,
+    showCancelButton: false,
+    confirmButtonText: 'Play Again',
+    denyButtonText: 'Dashboard',
+    confirmButtonColor: '#10b981',
+    denyButtonColor: '#6c757d'
   };
 
   Swal.fire({
@@ -622,9 +626,12 @@ function showGameResultModal(winnerSymbol, isPlayerWin, winnerName) {
     }
   }).then((result) => {
     if (result.isConfirmed && IS_ONLINE) {
-      // Request rematch
+      // Request rematch for PvP
       requestRematch();
-    } else if (result.isDenied || (result.isConfirmed && !IS_ONLINE)) {
+    } else if (result.isConfirmed && !IS_ONLINE) {
+      // Play again for PvC - create new game with alternating sides
+      playAgainPvC();
+    } else if (result.isDenied) {
       window.location.href = 'dashboard.php';
     }
   });
@@ -680,7 +687,7 @@ function isComputerTurn() {
   return GAME_MODE !== "pvp" && !IS_ONLINE && turn === COMPUTER_PLAYER && !gameOver;
 }
 
-function makeComputerMove() {
+async function makeComputerMove() {
   // Don't make moves in PvP or online mode
   if (GAME_MODE === "pvp" || IS_ONLINE) return;
 
@@ -695,6 +702,25 @@ function makeComputerMove() {
 
   computerMoving = true;
 
+  // For hard mode, try DeepSeek first, then fallback to local AI
+  const difficulty = GAME_MODE.split("-")[1];
+
+  if (difficulty === "hard") {
+    // Try DeepSeek LLM first (preferred for hard mode)
+    const deepSeekMove = await tryDeepSeekMove();
+
+    if (deepSeekMove) {
+      // DeepSeek provided a valid move
+      console.log('🤖 Using DeepSeek AI:', deepSeekMove.reasoning);
+      executeDeepSeekMove(deepSeekMove);
+      computerMoving = false;
+      return;
+    }
+
+    console.log('⚠️ DeepSeek not available, using local AI');
+  }
+
+  // Fallback to local AI (AdvancedAI or LearnedAI)
   setTimeout(() => {
     if (phase === "placement") {
       computerPlacement();
@@ -703,6 +729,91 @@ function makeComputerMove() {
     }
     computerMoving = false;
   }, 500);
+}
+
+/**
+ * Play again in PvC mode with alternating first turn
+ */
+async function playAgainPvC() {
+  try {
+    const response = await fetch('api/create-pvc-rematch.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: SESSION_ID,
+        game_mode: GAME_MODE
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Redirect to new game
+      window.location.href = `play.php?session=${data.new_session_id}`;
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: data.message || 'Failed to create new game',
+        confirmButtonColor: '#667eea'
+      });
+    }
+  } catch (error) {
+    console.error('Error creating rematch:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to create new game',
+      confirmButtonColor: '#667eea'
+    });
+  }
+}
+
+/**
+ * Try to get move from DeepSeek LLM
+ * Returns null if DeepSeek is unavailable or fails
+ */
+async function tryDeepSeekMove() {
+  try {
+    const response = await fetch('api/deepseek-move.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        board: board,
+        gameState: {
+          phase: phase,
+          placedCount: placedCount,
+          turn: turn
+        },
+        playerSide: COMPUTER_PLAYER,
+        session_id: SESSION_ID,
+        player_id: USER_ID
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.move) {
+      return data.move;
+    }
+
+    return null; // Fallback to local AI
+  } catch (error) {
+    console.error('DeepSeek API error:', error);
+    return null; // Fallback to local AI
+  }
+}
+
+/**
+ * Execute move returned by DeepSeek
+ */
+function executeDeepSeekMove(move) {
+  if (move.move_type === 'placement') {
+    handlePlacement(move.to_position);
+  } else if (move.move_type === 'movement') {
+    selectedFrom = move.from_position;
+    handleMovement(move.to_position);
+  }
 }
 
 function computerPlacement() {
