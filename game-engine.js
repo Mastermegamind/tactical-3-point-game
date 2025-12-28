@@ -774,8 +774,11 @@ async function playAgainPvC() {
  * Returns null if DeepSeek is unavailable or fails
  */
 async function tryDeepSeekMove() {
+  // Get AI provider preference (default: deepseek)
+  const aiProvider = localStorage.getItem('ai_provider') || 'deepseek';
+
   try {
-    const response = await fetch('api/deepseek-move.php', {
+    const response = await fetch('api/llm-move.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -787,19 +790,24 @@ async function tryDeepSeekMove() {
         },
         playerSide: COMPUTER_PLAYER,
         session_id: SESSION_ID,
-        player_id: USER_ID
+        player_id: USER_ID,
+        provider: aiProvider
       })
     });
 
     const data = await response.json();
 
     if (data.success && data.move) {
+      // Log which provider was used
+      if (data.provider) {
+        console.log(`🤖 Using ${data.provider}:`, data.reasoning);
+      }
       return data.move;
     }
 
     return null; // Fallback to local AI
   } catch (error) {
-    console.error('DeepSeek API error:', error);
+    console.error('LLM API error:', error);
     return null; // Fallback to local AI
   }
 }

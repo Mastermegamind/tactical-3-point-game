@@ -287,6 +287,21 @@ if (!isset($_SESSION['user_id'])) {
                         <button class="difficulty-btn selected" onclick="selectDifficulty(event, 'medium')">Medium</button>
                         <button class="difficulty-btn" onclick="selectDifficulty(event, 'hard')">Hard</button>
                     </div>
+
+                    <div id="ai-provider-select" class="mt-3" style="display: none;">
+                        <label class="form-label mb-2">AI Provider (Hard Mode Only):</label>
+                        <select class="form-select" id="ai-provider" onchange="saveAIProvider()">
+                            <option value="deepseek">DeepSeek (Default)</option>
+                            <option value="openai">OpenAI GPT-4</option>
+                            <option value="claude">Anthropic Claude</option>
+                            <option value="gemini">Google Gemini</option>
+                            <option value="grok">xAI Grok</option>
+                            <option value="meta">Meta AI (Llama)</option>
+                        </select>
+                        <small class="text-muted d-block mt-1">
+                            <span id="provider-status">Checking providers...</span>
+                        </small>
+                    </div>
                 </div>
             </div>
 
@@ -383,6 +398,15 @@ if (!isset($_SESSION['user_id'])) {
                 btn.classList.remove('selected');
             });
             event.currentTarget.classList.add('selected');
+
+            // Show/hide AI provider selector based on difficulty
+            const providerSelect = document.getElementById('ai-provider-select');
+            if (difficulty === 'hard') {
+                providerSelect.style.display = 'block';
+                checkAIProviders();
+            } else {
+                providerSelect.style.display = 'none';
+            }
         }
 
         async function startGame() {
@@ -636,6 +660,61 @@ if (!isset($_SESSION['user_id'])) {
             document.getElementById('online-users-list').style.display = 'block';
             loadOnlineUsers();
         }
+
+        // AI Provider Management
+        function saveAIProvider() {
+            const provider = document.getElementById('ai-provider').value;
+            localStorage.setItem('ai_provider', provider);
+            console.log('AI provider set to:', provider);
+        }
+
+        function loadAIProvider() {
+            const savedProvider = localStorage.getItem('ai_provider') || 'deepseek';
+            const select = document.getElementById('ai-provider');
+            if (select) {
+                select.value = savedProvider;
+            }
+        }
+
+        async function checkAIProviders() {
+            const statusElement = document.getElementById('provider-status');
+            statusElement.textContent = 'Checking providers...';
+
+            try {
+                const response = await fetch('api/check-ai-providers.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    const configuredCount = Object.values(data.providers).filter(p => p.configured).length;
+                    statusElement.innerHTML = `${configuredCount} of 6 providers configured`;
+
+                    // Update select options to show which are configured
+                    const select = document.getElementById('ai-provider');
+                    const options = select.querySelectorAll('option');
+
+                    options.forEach(option => {
+                        const provider = option.value;
+                        const providerData = data.providers[provider];
+
+                        if (providerData && providerData.configured) {
+                            option.textContent = option.textContent.replace(' (Not Configured)', '').replace(' ✓', '') + ' ✓';
+                        } else {
+                            option.textContent = option.textContent.replace(' (Not Configured)', '').replace(' ✓', '') + ' (Not Configured)';
+                        }
+                    });
+                } else {
+                    statusElement.textContent = 'Unable to check provider status';
+                }
+            } catch (error) {
+                console.error('Error checking AI providers:', error);
+                statusElement.textContent = 'Error checking providers';
+            }
+        }
+
+        // Load saved AI provider on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAIProvider();
+        });
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
